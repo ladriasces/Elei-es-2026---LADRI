@@ -6,6 +6,7 @@ Fontes:
     Eleição 6257 = "Eleição Ordinária Federal - 2026 1º Turno"; cargo 0001 = Presidente.
   - IBGE, API de malhas territoriais: https://servicodados.ibge.gov.br/api/docs/malhas
   - Natural Earth (mapa-múndi), via GitHub.
+  - TSE, Portal de Dados Abertos: votação por município em 2022 (~640 MB), para a comparação com 2022.
 
 Tudo é salvo em data/raw/. Arquivos já baixados não são baixados de novo (cache).
 """
@@ -103,6 +104,24 @@ def coletar_malhas() -> None:
     print("Malhas concluídas.")
 
 
+def coletar_2022() -> None:
+    """Baixa (em partes, sem carregar tudo na memória) o arquivo de votação de 2022 do TSE."""
+    destino = RAW / "votacao_candidato_munzona_2022.zip"
+    if destino.exists() and destino.stat().st_size > 0:
+        return
+    url = "https://cdn.tse.jus.br/estatistica/sead/odsele/votacao_candidato_munzona/votacao_candidato_munzona_2022.zip"
+    print("Baixando resultados de 2022 (~640 MB)...")
+    parcial = destino.with_suffix(".parcial")
+    with sessao.get(url, stream=True, timeout=120) as r:
+        r.raise_for_status()
+        with open(parcial, "wb") as f:
+            for bloco in r.iter_content(chunk_size=1 << 20):
+                f.write(bloco)
+    parcial.replace(destino)
+    print("2022 concluído.")
+
+
 if __name__ == "__main__":
     coletar_tse()
     coletar_malhas()
+    coletar_2022()

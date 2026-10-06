@@ -36,9 +36,15 @@ MID = "#4a504c"
 ABST = "#8f7fd6"
 CINZA = "#5f6561"
 
-F_TITULO = fm.FontProperties(fname=r"C:\Windows\Fonts\seguibl.ttf")
-F_SEMI = fm.FontProperties(fname=r"C:\Windows\Fonts\seguisb.ttf")
-F_TEXTO = fm.FontProperties(fname=r"C:\Windows\Fonts\segoeui.ttf")
+def fonte_sistema(arquivo: str, peso: str) -> fm.FontProperties:
+    """Segoe UI no Windows; fora dele, usa a DejaVu Sans que vem com o matplotlib."""
+    caminho = Path(r"C:\Windows\Fonts") / arquivo
+    return fm.FontProperties(fname=caminho) if caminho.exists() else fm.FontProperties(family="DejaVu Sans", weight=peso)
+
+
+F_TITULO = fonte_sistema("seguibl.ttf", "heavy")
+F_SEMI = fonte_sistema("seguisb.ttf", "semibold")
+F_TEXTO = fonte_sistema("segoeui.ttf", "normal")
 DPI = 300
 
 cm_margem = LinearSegmentedColormap.from_list("margem", [VERM, MID, AZUL])

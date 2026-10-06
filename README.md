@@ -25,16 +25,18 @@ Nenhum candidato alcançou mais de 50% dos votos válidos; os dois disputam o 2�
 
 ```bash
 pip install -r requirements.txt
-python 01_coleta.py          # baixa os resultados do TSE e as malhas do IBGE (data/raw/)
+python 01_coleta.py          # baixa os resultados do TSE (2026 e 2022) e as malhas do IBGE (data/raw/)
 python 02_tratamento.py      # monta as tabelas em data/processed/
 python 03_painel.py          # gera o painel (painel/index.html e docs/index.html)
 python 04_instagram.py       # gera as artes 1:1 em instagram/
 python 05_stories_exterior.py  # gera as artes do exterior em 9:16 e 16:9
 ```
 
-O arquivo de 2022 (`votacao_candidato_munzona_2022.zip`, ~640 MB) precisa ser baixado do [Portal de Dados Abertos do TSE](https://dadosabertos.tse.jus.br/) e colocado em `data/raw/`. Os dados brutos não ficam no repositório por causa do tamanho.
+Os dados brutos (~690 MB, incluindo o arquivo de 2022 do [Portal de Dados Abertos do TSE](https://dadosabertos.tse.jus.br/)) não ficam no repositório por causa do tamanho; o `01_coleta.py` baixa tudo.
 
-As artes usam a família de fontes Segoe UI, presente no Windows.
+Para só explorar os dados, não é preciso rodar a coleta: o notebook usa as tabelas de `data/processed/` e baixa sozinho os poucos arquivos brutos de que precisa.
+
+As artes usam a fonte Segoe UI no Windows; em outros sistemas, usam a DejaVu Sans.
 
 ## Fontes
 
@@ -50,6 +52,10 @@ As artes usam a família de fontes Segoe UI, presente no Windows.
 - O país de cada cidade no exterior foi atribuído manualmente ([`exterior_paises.py`](exterior_paises.py)), pois o TSE informa só a cidade-sede da seção.
 - A comparação com 2022 usa o candidato do PL de cada ano (Jair Bolsonaro em 2022, Flávio Bolsonaro em 2026).
 - Conferência: a soma de municípios e exterior é igual ao total nacional divulgado pelo TSE (119.300.788 votos válidos).
+
+## Como esta plataforma foi feita
+
+Esta plataforma foi desenvolvida pelo LADRI com o auxílio do **Claude**, assistente de inteligência artificial da Anthropic. O Claude ajudou a escrever o código de coleta, tratamento e análise dos dados, o painel interativo, o notebook e as visualizações. A definição dos recortes e a revisão do conteúdo foram feitas pela equipe do LADRI, e os totais foram conferidos com os números oficiais divulgados pelo TSE.
 
 ## Estrutura
 
