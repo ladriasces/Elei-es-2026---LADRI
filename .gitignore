@@ -1,0 +1,18 @@
+# Dados brutos (689 MB; o zip de 2022 passa do limite do GitHub). Recrie com: python 01_coleta.py
+data/raw/
+
+# Cache de 2022 é recriado pelo 02_tratamento.py a partir do zip
+# (mantido no repositório por ser pequeno e permitir rodar o notebook sem o zip)
+
+# Python / Jupyter
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+
+# Ferramentas locais
+.claude/
+data/fontes/
+.vscode/
+.idea/
+Thumbs.db
+desktop.ini
