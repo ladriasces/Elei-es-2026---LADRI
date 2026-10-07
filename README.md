@@ -16,7 +16,7 @@ Nenhum candidato alcançou mais de 50% dos votos válidos; os dois disputam o 2�
 
 ## O que tem aqui
 
-- **Painel interativo** ([`docs/index.html`](docs/index.html)): visão geral, mapa por município, análise por estado (com mesorregiões), brasileiros no exterior e comparação com 2022.
+- **Painel interativo** ([`docs/index.html`](docs/index.html)): visão geral, mapa por município, análise por região, análise por estado (com mesorregiões), abstenção (com comparação com 2022), brasileiros no exterior e comparação com 2022.
 - **Notebook didático** ([`analise_eleicoes_2026.ipynb`](analise_eleicoes_2026.ipynb)): como usar a API do TSE, estatística descritiva, mapas com geopandas, exterior e 2022.
 - **Artes para redes sociais** ([`instagram/`](instagram/)): mapas e gráficos em 1:1, 9:16 (stories) e 16:9.
 - **Tabelas tratadas** ([`data/processed/`](data/processed/)): resultados por candidato, UF, município e país, prontos para análise.
@@ -41,14 +41,14 @@ As artes usam a fonte Segoe UI no Windows; em outros sistemas, usam a DejaVu San
 ## Fontes
 
 - **Resultados 2026:** API pública de divulgação de resultados do TSE (`resultados.tse.jus.br`), eleição 6257, cargo Presidente. Um arquivo por município (5.571) e por cidade no exterior (186).
-- **Resultados 2022:** Portal de Dados Abertos do TSE, `votacao_candidato_munzona_2022`, 1º turno, Presidente.
+- **Resultados 2022:** Portal de Dados Abertos do TSE, `votacao_candidato_munzona_2022` (votos) e `detalhe_votacao_munzona_2022` (comparecimento e abstenção), 1º turno, Presidente.
 - **Malhas e divisão regional:** API de malhas e de localidades do IBGE.
 - **Mapa-múndi:** Natural Earth (1:110 milhões).
 
 ## Notas de método
 
 - Percentuais dos candidatos são calculados sobre os **votos válidos** (sem brancos e nulos).
-- **Abstenção geral** (21,1%) inclui os eleitores no exterior; **só no Brasil**, a abstenção foi de 20,8%.
+- **Abstenção geral** (21,1%) inclui os eleitores no exterior; **só no Brasil**, a abstenção foi de 20,8%. Em 2022, os mesmos números foram 20,95% e 20,79%.
 - O país de cada cidade no exterior foi atribuído manualmente ([`exterior_paises.py`](exterior_paises.py)), pois o TSE informa só a cidade-sede da seção.
 - A comparação com 2022 usa o candidato do PL de cada ano (Jair Bolsonaro em 2022, Flávio Bolsonaro em 2026).
 - Conferência: a soma de municípios e exterior é igual ao total nacional divulgado pelo TSE (119.300.788 votos válidos).

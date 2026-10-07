@@ -121,7 +121,17 @@ def coletar_2022() -> None:
     print("2022 concluído.")
 
 
+def coletar_abstencao_2022() -> None:
+    """Comparecimento e abstenção de 2022 por município e zona (TSE, ~4 MB)."""
+    baixar(
+        "https://cdn.tse.jus.br/estatistica/sead/odsele/detalhe_votacao_munzona/detalhe_votacao_munzona_2022.zip",
+        RAW / "detalhe_votacao_munzona_2022.zip",
+    )
+    print("Abstenção 2022 concluída.")
+
+
 if __name__ == "__main__":
     coletar_tse()
     coletar_malhas()
     coletar_2022()
+    coletar_abstencao_2022()

@@ -99,6 +99,23 @@ def carregar_2022() -> pd.DataFrame:
     return res
 
 
+def carregar_abstencao_2022() -> pd.DataFrame:
+    """Eleitores aptos e abstenções do 1º turno presidencial de 2022 por município TSE (inclui exterior)."""
+    cache = OUT / "abst2022_municipios.csv"
+    if cache.exists():
+        return pd.read_csv(cache, dtype={"cod_tse": str})
+    with zipfile.ZipFile(RAW / "detalhe_votacao_munzona_2022.zip") as z:
+        df = pd.read_csv(
+            z.open("detalhe_votacao_munzona_2022_BR.csv"), sep=";", encoding="latin1",
+            usecols=["NR_TURNO", "CD_CARGO", "CD_MUNICIPIO", "QT_APTOS", "QT_ABSTENCOES"],
+        )
+    df = df[(df.NR_TURNO == 1) & (df.CD_CARGO == 1)]
+    df["cod_tse"] = df.CD_MUNICIPIO.astype(str).str.zfill(5)
+    res = df.groupby("cod_tse", as_index=False).agg(aptos22=("QT_APTOS", "sum"), abst22=("QT_ABSTENCOES", "sum"))
+    res.to_csv(cache, index=False)
+    return res
+
+
 def main() -> None:
     OUT.mkdir(parents=True, exist_ok=True)
     cfg = ler(RAW / "tse" / "municipios.json")["abr"]
@@ -134,14 +151,21 @@ def main() -> None:
     muns["d_lula"] = (muns.p_lula - muns.p_lula22).round(3)            # Lula 2026 - Lula 2022
     muns["d_bolsonarismo"] = (muns.p_flavio - muns.p_bolsonaro22).round(3)  # Flávio 2026 - Jair 2022
 
+    # Abstenção de 2022 (% dos aptos)
+    muns = muns.merge(carregar_abstencao_2022(), on="cod_tse", how="left")
+    muns["p_abstencao22"] = (100 * muns.abst22 / muns.aptos22).round(3)
+    muns["d_abstencao"] = (muns.p_abstencao - muns.p_abstencao22).round(3)
+
     # UFs: agrega 2022 por UF
     ufs = pd.DataFrame(ufs)
-    agg22 = muns.groupby("uf")[["validos22", "v_lula22", "v_bolsonaro22"]].sum()
+    agg22 = muns.groupby("uf")[["validos22", "v_lula22", "v_bolsonaro22", "aptos22", "abst22"]].sum()
     ufs = ufs.merge(agg22, left_on="uf", right_index=True, how="left")
     ufs["p_lula22"] = (100 * ufs.v_lula22 / ufs.validos22).round(3)
     ufs["p_bolsonaro22"] = (100 * ufs.v_bolsonaro22 / ufs.validos22).round(3)
     ufs["d_lula"] = (ufs.p_lula - ufs.p_lula22).round(3)
     ufs["d_bolsonarismo"] = (ufs.p_flavio - ufs.p_bolsonaro22).round(3)
+    ufs["p_abstencao22"] = (100 * ufs.abst22 / ufs.aptos22).round(3)
+    ufs["d_abstencao"] = (ufs.p_abstencao - ufs.p_abstencao22).round(3)
     ibge_uf = {"RO": "N", "AC": "N", "AM": "N", "RR": "N", "PA": "N", "AP": "N", "TO": "N",
                "MA": "NE", "PI": "NE", "CE": "NE", "RN": "NE", "PB": "NE", "PE": "NE", "AL": "NE", "SE": "NE", "BA": "NE",
                "MG": "SE", "ES": "SE", "RJ": "SE", "SP": "SE", "PR": "S", "SC": "S", "RS": "S",
@@ -175,7 +199,8 @@ def main() -> None:
     ext.to_csv(OUT / "exterior_cidades.csv", index=False)
 
     soma = ["eleitores", "comparecimento", "abstencao", "validos", "brancos", "nulos",
-            "v_flavio", "v_lula", "v_cury", "v_renan", "v_caiado", "v_outros", "validos22", "v_lula22", "v_bolsonaro22"]
+            "v_flavio", "v_lula", "v_cury", "v_renan", "v_caiado", "v_outros", "validos22", "v_lula22", "v_bolsonaro22",
+            "aptos22", "abst22"]
     paises = ext.groupby(["iso3", "pais", "continente"], as_index=False)[soma].sum()
     paises["cidades"] = ext.groupby("iso3").size().reindex(paises.iso3).values
     for c in ["flavio", "lula", "cury", "renan", "caiado", "outros"]:
@@ -183,6 +208,7 @@ def main() -> None:
     paises["p_abstencao"] = (100 * paises.abstencao / paises.eleitores).round(3)
     paises["p_lula22"] = (100 * paises.v_lula22 / paises.validos22.where(paises.validos22 > 0)).round(3)
     paises["p_bolsonaro22"] = (100 * paises.v_bolsonaro22 / paises.validos22.where(paises.validos22 > 0)).round(3)
+    paises["p_abstencao22"] = (100 * paises.abst22 / paises.aptos22.where(paises.aptos22 > 0)).round(3)
     paises.sort_values("eleitores", ascending=False).to_csv(OUT / "exterior_paises.csv", index=False)
 
     # --- Checagens de consistência
@@ -191,6 +217,10 @@ def main() -> None:
     print(f"  Municípios BR: {len(br)} | sem código IBGE: {br.cod_ibge.isna().sum()} | sem meta IBGE: {br.regiao.isna().sum()}")
     print(f"  Municípios sem dado 2022: {br.validos22.isna().sum()} | cidades exterior sem 2022: {ext.validos22.isna().sum()}")
     print(f"  Exterior: {len(ext)} cidades, {len(paises)} países, sem país: {ext.iso3.isna().sum()}")
+    a22 = carregar_abstencao_2022()
+    print(f"  Abstenção 2022: geral {100 * a22.abst22.sum() / a22.aptos22.sum():.2f}% "
+          f"| soma UFs {100 * ufs.abst22.sum() / ufs.aptos22.sum():.2f}% "
+          f"| municípios BR sem dado: {br.aptos22.isna().sum()}")
 
 
 if __name__ == "__main__":

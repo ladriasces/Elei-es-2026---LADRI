@@ -9,6 +9,7 @@ from pathlib import Path
 
 import geopandas as gpd
 import pandas as pd
+import shapely
 from shapely.geometry import MultiPolygon, Polygon
 from shapely.geometry.polygon import orient
 
@@ -25,17 +26,21 @@ CENTROIDES_EXTRAS = {
 
 
 def sentido_d3(g):
-    """O D3 (geometria esférica) espera o anel externo no sentido horário."""
-    if isinstance(g, Polygon):
-        return orient(g, sign=-1.0)
-    if isinstance(g, MultiPolygon):
-        return MultiPolygon([orient(p, sign=-1.0) for p in g.geoms])
-    return g
+    """O D3 (geometria esférica) espera o anel externo no sentido horário.
+    Pedaços sem área (ilhas que colapsaram na simplificação) são descartados: o D3 os
+    interpretaria como o globo inteiro."""
+    partes = [g] if isinstance(g, Polygon) else list(g.geoms) if isinstance(g, MultiPolygon) else []
+    partes = [orient(p, sign=-1.0) for p in partes if p.area > 0]
+    if not partes:
+        return g
+    return partes[0] if len(partes) == 1 else MultiPolygon(partes)
 
 
 def geo_compacto(gdf: gpd.GeoDataFrame, tolerancia: float, casas: int = 3) -> dict:
     gdf = gdf.copy()
-    gdf["geometry"] = gdf.geometry.simplify(tolerancia, preserve_topology=True).map(sentido_d3)
+    # Simplifica, arredonda na grade final (remove o que colapsar) e só então orienta
+    simpl = shapely.set_precision(gdf.geometry.simplify(tolerancia, preserve_topology=True).values, 10 ** -casas)
+    gdf["geometry"] = gpd.GeoSeries(simpl, index=gdf.index, crs=gdf.crs).map(sentido_d3)
     gj = json.loads(gdf.to_json(drop_id=True))
 
     def arred(c):
@@ -65,6 +70,10 @@ def main() -> None:
     resumo["p_bolsonaro22"] = round(100 * p22.v_bolsonaro22.sum() / p22.validos22.sum(), 3)
     resumo["mun_flavio"] = int((mun.vencedor_num == "22").sum())
     resumo["mun_lula"] = int((mun.vencedor_num == "13").sum())
+    a22 = pd.read_csv(OUT / "abst2022_municipios.csv", dtype={"cod_tse": str})
+    resumo["p_abstencao22"] = round(100 * a22.abst22.sum() / a22.aptos22.sum(), 3)
+    br22 = ufs[ufs.uf != "ZZ"]
+    resumo["p_abstencao22_br"] = round(100 * br22.abst22.sum() / br22.aptos22.sum(), 3)
 
     dados = {
         "resumo": resumo,
@@ -76,21 +85,25 @@ def main() -> None:
             {"uf": u.uf, "nome": u.nome, "regiao": u.regiao, "eleitores": int(u.eleitores), "comparecimento": int(u.comparecimento),
              "validos": int(u.validos), "v_flavio": int(u.v_flavio), "v_lula": int(u.v_lula), "v_outros": int(u.validos - u.v_flavio - u.v_lula),
              **{c: r(getattr(u, c)) for c in campos}, "p_lula22": r(u.p_lula22), "p_bolsonaro22": r(u.p_bolsonaro22),
+             "aptos22": int(u.aptos22), "abst22": int(u.abst22), "p_abstencao22": r(u.p_abstencao22),
+             "validos22": int(u.validos22), "v_lula22": int(u.v_lula22), "v_bolsonaro22": int(u.v_bolsonaro22),
              "venc": u.vencedor_num if isinstance(u.vencedor_num, str) else str(int(u.vencedor_num))}
             for u in ufs.itertuples()
         ],
         # Municípios em formato colunar compacto
-        "mun_cols": ["ibge", "nome", "uf", "eleitores", "validos", *campos, "p_lula22", "p_bolsonaro22", "venc", "meso", "imediata"],
+        "mun_cols": ["ibge", "nome", "uf", "eleitores", "validos", *campos, "p_lula22", "p_bolsonaro22", "venc", "meso", "imediata", "p_abstencao22", "aptos22"],
         "mun": [
             [m.cod_ibge, m.nome_ibge, m.uf, int(m.eleitores), int(m.validos), *[r(getattr(m, c)) for c in campos],
-             r(m.p_lula22), r(m.p_bolsonaro22), m.vencedor_num, m.mesorregiao if isinstance(m.mesorregiao, str) else None, m.regiao_imediata]
+             r(m.p_lula22), r(m.p_bolsonaro22), m.vencedor_num, m.mesorregiao if isinstance(m.mesorregiao, str) else None, m.regiao_imediata,
+             r(m.p_abstencao22), None if pd.isna(m.aptos22) else int(m.aptos22)]
             for m in mun.itertuples()
         ],
         "paises": [
             {"iso3": p.iso3, "pais": p.pais, "continente": p.continente, "cidades": int(p.cidades), "eleitores": int(p.eleitores),
              "comparecimento": int(p.comparecimento), "validos": int(p.validos), "v_flavio": int(p.v_flavio), "v_lula": int(p.v_lula),
              "p_flavio": r(p.p_flavio), "p_lula": r(p.p_lula), "p_abstencao": r(p.p_abstencao),
-             "p_lula22": r(p.p_lula22), "p_bolsonaro22": r(p.p_bolsonaro22)}
+             "p_lula22": r(p.p_lula22), "p_bolsonaro22": r(p.p_bolsonaro22),
+             "p_abstencao22": r(p.p_abstencao22)}
             for p in pa.itertuples()
         ],
         "cidades_ext": [
