@@ -338,12 +338,9 @@ footer { margin-top: 36px; padding-top: 16px; border-top: 1px solid var(--line);
       <p class="lede" id="abst-lede"></p>
     </div>
     <div class="kpis" id="kpis-abst"></div>
-    <div class="controles">
-      <div><span class="ctl-label">Mapa</span>
-        <div class="seg" id="ctl-abst"><button data-v="p_abstencao" aria-pressed="true">Abstenção em 2026</button><button data-v="d_abst" aria-pressed="false">Variação desde 2022</button></div></div>
-    </div>
     <div class="grade">
       <div class="cartao c8">
+        <h3>Abstenção por município em 2026</h3>
         <div class="mapa" id="mapa-abst"></div>
         <div class="legenda" id="leg-abst"></div>
       </div>
@@ -352,14 +349,24 @@ footer { margin-top: 36px; padding-top: 16px; border-top: 1px solid var(--line);
         <div class="grafico" id="g-abst-reg"></div>
         <div class="detalhe" id="det-abst"></div>
       </div>
-      <div class="cartao c6">
-        <h3>Por estado: 2022 → 2026</h3>
+      <div class="cartao c7">
+        <h3>Onde a abstenção subiu e onde caiu</h3>
+        <p class="nota" id="abst-var-texto"></p>
+        <div class="mapa" id="mapa-abst-var"></div>
+        <div class="legenda" id="leg-abst-var"></div>
+      </div>
+      <div class="cartao c5">
+        <h3>A abstenção mudou de lugar</h3>
+        <p class="nota">Estados ordenados da maior alta à maior queda; abstenção em % dos eleitores aptos.</p>
+        <div class="legenda"><div class="chips"><span class="chip"><i style="background:var(--outros)"></i>2022</span><span class="chip"><i style="background:var(--abst)"></i>2026: subiu</span><span class="chip"><i style="background:var(--menos)"></i>2026: caiu</span></div></div>
         <div class="grafico" id="g-abst-uf"></div>
       </div>
       <div class="cartao c6">
         <h3>Tamanho do município</h3>
         <div class="grafico" id="g-abst-porte"></div>
         <p class="nota">Municípios agrupados pelo número de eleitores aptos. Abstenção calculada sobre o total de aptos de cada grupo.</p>
+      </div>
+      <div class="cartao c6">
         <h3>Abstenção e voto</h3>
         <div class="grafico" id="g-abst-voto"></div>
         <p class="nota" id="abst-corr"></p>
@@ -1013,7 +1020,6 @@ function mapaReg() {
 }
 
 /* ---------- aba Abstenção ---------- */
-const estadoAbst = { ind: "p_abstencao" };
 const FAIXAS = [["Até 5 mil", 0, 5e3], ["5 a 20 mil", 5e3, 2e4], ["20 a 100 mil", 2e4, 1e5], ["100 mil a 1 milhão", 1e5, 1e6], ["Mais de 1 milhão", 1e6, Infinity]];
 function pearson(xs, ys) {
   const mx = d3.mean(xs), my = d3.mean(ys);
@@ -1033,10 +1039,16 @@ function abstencao() {
     { l: "Maior abstenção", v: fmtP(maior.p_abstencao), d: `${maior.nome} (${maior.uf}) · >10 mil eleitores` },
     { l: "Menor abstenção", v: fmtP(menor.p_abstencao), d: `${menor.nome} (${menor.uf}) · >10 mil eleitores` },
   ]);
-  mapaAbst();
+  mapaAbst("#mapa-abst", "p_abstencao", "#leg-abst", "Abstenção em 2026 (% dos eleitores aptos)");
+  mapaAbst("#mapa-abst-var", "d_abst", "#leg-abst-var", "Variação entre 2022 e 2026 (p.p.) · verde-azulado: caiu · roxo: subiu");
+  const regs = REGIOES.map(r => [r, AGG_REG.get(r).d_abst]);
+  const lista = arr => { const t = arr.map(([r, d]) => `no ${r} (${fmtPP(d)})`); return t.length > 1 ? t.slice(0, -1).join(", ") + " e " + t[t.length - 1] : t.join(""); };
+  const cai = regs.filter(x => x[1] < 0).sort((a, b) => a[1] - b[1]), sobe = regs.filter(x => x[1] > 0).sort((a, b) => b[1] - a[1]);
+  $("#abst-var-texto").textContent = `Variação da abstenção entre o 1º turno de 2022 e o de 2026. Caiu ${lista(cai)}; subiu ${lista(sobe)}. `
+    + `Nos municípios, subiu em ${fmtInt.format(R.mun_abst_subiu)} e caiu em ${fmtInt.format(R.mun_abst_caiu)}.`;
   $("#det-abst").innerHTML = `<p class="nota">Clique em um município do mapa para ver o detalhe aqui.</p>`;
   barrasComparadas("#g-abst-reg", REGIOES.map(r => { const o = AGG_REG.get(r); return { rot: r, v26: o.p_abstencao, v22: o.p_abstencao22, tip: tipAbst(r, o.p_abstencao, o.p_abstencao22) }; }), { dom: [0, 30], ml: 100, lh: 30 });
-  barrasComparadas("#g-abst-uf", [...UFS].sort((a, b) => b.p_abstencao - a.p_abstencao).map(u => ({ rot: u.nome, v26: u.p_abstencao, v22: u.p_abstencao22, tip: tipAbst(u.nome, u.p_abstencao, u.p_abstencao22) })), { dom: [0, 30], ml: 150, lh: 22 });
+  halteresAbst();
   barrasComparadas("#g-abst-porte", FAIXAS.map(([rot, a, b]) => {
     const g = MUN.filter(m => m.eleitores >= a && m.eleitores < b);
     const el = d3.sum(g, m => m.eleitores), ab = d3.sum(g, m => m.eleitores * m.p_abstencao / 100);
@@ -1049,9 +1061,9 @@ function abstencao() {
     const d = p.p_abstencao22 == null ? null : p.p_abstencao - p.p_abstencao22;
     return `<tr><td>${p.pais}</td><td>${fmtInt.format(p.eleitores)}</td><td>${fmtP(p.p_abstencao)}</td><td>${fmtP(p.p_abstencao22)}</td><td>${fmtPP(d)}</td></tr>`; }).join("")}</tbody></table>`;
 }
-function mapaAbst() {
-  const k = estadoAbst.ind, esc = escala(k);
-  const r = desenhaMapa("#mapa-abst", D.geo.mun, {
+function mapaAbst(alvo, k, legAlvo, titLegenda) {
+  const esc = escala(k);
+  const r = desenhaMapa(alvo, D.geo.mun, {
     getObj: id => MUN_IDX.get(id),
     cor: o => o[k] == null ? css("--line") : esc.cor(o[k]),
     tip: o => tipAbst(`${o.nome} (${o.uf})`, o.p_abstencao, o.p_abstencao22, linhaTip(null, "Eleitores", fmtInt.format(o.eleitores))),
@@ -1062,8 +1074,28 @@ function mapaAbst() {
       </div><div class="muted num">Variação: ${fmtPP(o.d_abst)} · ${fmtInt.format(o.eleitores)} eleitores aptos</div>`; },
     contorno: UF_GEO_MERGE,
   });
-  r.g.selectAll("path.ufs").data(D.geo.uf.features).join("path").attr("class", "contorno").attr("d", r.path);
-  legenda("#leg-abst", k, esc, k === "p_abstencao" ? "Abstenção em 2026 (% dos eleitores aptos)" : "Variação da abstenção entre 2022 e 2026 (p.p.)");
+  legenda(legAlvo, k, esc, titLegenda);
+}
+// "A abstenção mudou de lugar": 2022 (cinza) → 2026 (roxo se subiu, verde-azulado se caiu)
+function halteresAbst() {
+  const box = $("#g-abst-uf"); box.innerHTML = "";
+  const dados = [...UFS].sort((a, b) => b.d_abst - a.d_abst);
+  const W = 480, lh = 22, ml = 150, mr = 52, H = dados.length * lh + 30;
+  const x = d3.scaleLinear([14, 26], [ml, W - mr]);
+  const svg = d3.select(box).append("svg").attr("viewBox", `0 0 ${W} ${H}`).attr("role", "img").attr("aria-label", "Abstenção por estado em 2022 e 2026");
+  svg.append("g").attr("class", "grid").selectAll("line").data([15, 20, 25]).join("line").attr("x1", x).attr("x2", x).attr("y1", 0).attr("y2", dados.length * lh);
+  const corV = v => Math.abs(v) < 0.05 ? css("--muted") : v > 0 ? css("--abst") : css("--menos");
+  const g = svg.selectAll("g.l").data(dados).join("g").attr("class", "l").attr("transform", (d, i) => `translate(0,${i * lh + lh / 2})`);
+  g.append("text").attr("x", ml - 8).attr("y", 4).attr("text-anchor", "end").text(d => d.nome);
+  g.append("line").attr("x1", d => x(d.p_abstencao22)).attr("x2", d => x(d.p_abstencao)).attr("stroke", css("--line-strong")).attr("stroke-width", 2);
+  g.append("circle").attr("cx", d => x(d.p_abstencao22)).attr("r", 4.5).attr("fill", css("--outros"));
+  g.append("circle").attr("cx", d => x(d.p_abstencao)).attr("r", 5).attr("fill", d => corV(d.d_abst)).attr("stroke", css("--surface")).attr("stroke-width", 1.5);
+  g.append("text").attr("x", W - mr + 8).attr("y", 4).attr("class", "num").style("fill", d => corV(d.d_abst))
+    .text(d => Math.abs(d.d_abst) < 0.05 ? "0,0" : fmtPP(d.d_abst).replace(" p.p.", ""));
+  g.append("rect").attr("x", 0).attr("y", -lh / 2).attr("width", W).attr("height", lh).attr("fill", "transparent")
+    .on("mousemove", (ev, d) => mostrarTip(ev, tipAbst(d.nome, d.p_abstencao, d.p_abstencao22))).on("mouseleave", esconderTip);
+  svg.append("g").attr("class", "eixo").attr("transform", `translate(0,${dados.length * lh + 4})`)
+    .call(d3.axisBottom(x).tickValues([15, 20, 25]).tickFormat(v => v + "%").tickSizeOuter(0)).select(".domain").remove();
 }
 function dispersaoAbst() {
   const box = $("#g-abst-voto"); box.innerHTML = "";
@@ -1140,7 +1172,7 @@ function comparar() {
     { l: "PL (Jair → Flávio)", v: `${fmtP(R.p_bolsonaro22)} → ${fmtP(f.pct)}`, d: fmtPP(f.pct - R.p_bolsonaro22), cor: "var(--flavio)" },
     { l: "Estados onde Lula caiu", v: `${ufsPerdeu} de 27`, d: "variação no % de votos válidos" },
     { l: "Estados onde o PL cresceu", v: `${UFS.filter(u => u.d_bols > 0).length} de 27`, d: "Flávio 2026 vs. Jair 2022" },
-    { l: "Municípios onde Lula caiu", v: fmtInt.format(MUN.filter(m => m.d_lula < 0).length), d: `de ${fmtInt.format(MUN.filter(m => m.d_lula != null).length)} com dados nos dois anos` },
+    { l: "Municípios onde Lula caiu", v: fmtInt.format(R.mun_lula_caiu), d: `de ${fmtInt.format(R.mun_comparaveis)} com dados nos dois anos` },
   ]);
   halteres("#g-halteres", "p_lula22", "p_lula", "d_lula", "--lula", "Lula 2022", "Lula 2026");
   halteres("#g-halteres-pl", "p_bolsonaro22", "p_flavio", "d_bols", "--flavio", "Jair 2022", "Flávio 2026");
@@ -1198,7 +1230,6 @@ seg("#ctl-uf-meso", v => { estadoUF.meso = v === "1"; mapaUF(); });
 seg("#ctl-ext", v => { estadoExt.ind = v; mapaMundo(); });
 seg("#ctl-reg", v => selecionarRegiao(v));
 seg("#ctl-reg-ind", v => { estadoReg.ind = v; mapaReg(); });
-seg("#ctl-abst", v => { estadoAbst.ind = v; mapaAbst(); });
 seg("#ctl-comp", v => { estadoComp.ind = v; mapaComp(); });
 
 const RENDER = { geral, mapa: () => { mapaBR(); estadoMapa.sel ? detalheBR(estadoMapa.sel) : detalheBRPadrao(); tabelasBR(); }, regiao: () => { marcarSeg("#ctl-reg", estadoReg.reg); regiao(); }, estado, abstencao, exterior, comparar, sobre: () => {} };

@@ -51,6 +51,13 @@ def geo_compacto(gdf: gpd.GeoDataFrame, tolerancia: float, casas: int = 3) -> di
     return gj
 
 
+def nome_uf(nome: str) -> str:
+    """'Mato Grosso Do Sul' -> 'Mato Grosso do Sul' (preposições em minúscula)."""
+    for p in ("Do", "De", "Da", "Dos", "Das"):
+        nome = nome.replace(f" {p} ", f" {p.lower()} ")
+    return nome
+
+
 def r(x, n=2):
     return None if pd.isna(x) else round(float(x), n)
 
@@ -70,6 +77,11 @@ def main() -> None:
     resumo["p_bolsonaro22"] = round(100 * p22.v_bolsonaro22.sum() / p22.validos22.sum(), 3)
     resumo["mun_flavio"] = int((mun.vencedor_num == "22").sum())
     resumo["mun_lula"] = int((mun.vencedor_num == "13").sum())
+    # Contagens com a precisão completa (no navegador os percentuais chegam arredondados)
+    resumo["mun_lula_caiu"] = int((mun.d_lula < 0).sum())
+    resumo["mun_comparaveis"] = int(mun.d_lula.notna().sum())
+    resumo["mun_abst_subiu"] = int((mun.d_abstencao > 0).sum())
+    resumo["mun_abst_caiu"] = int((mun.d_abstencao < 0).sum())
     a22 = pd.read_csv(OUT / "abst2022_municipios.csv", dtype={"cod_tse": str})
     resumo["p_abstencao22"] = round(100 * a22.abst22.sum() / a22.aptos22.sum(), 3)
     br22 = ufs[ufs.uf != "ZZ"]
@@ -82,7 +94,7 @@ def main() -> None:
             for c in cand.itertuples()
         ],
         "ufs": [
-            {"uf": u.uf, "nome": u.nome, "regiao": u.regiao, "eleitores": int(u.eleitores), "comparecimento": int(u.comparecimento),
+            {"uf": u.uf, "nome": nome_uf(u.nome), "regiao": u.regiao, "eleitores": int(u.eleitores), "comparecimento": int(u.comparecimento),
              "validos": int(u.validos), "v_flavio": int(u.v_flavio), "v_lula": int(u.v_lula), "v_outros": int(u.validos - u.v_flavio - u.v_lula),
              **{c: r(getattr(u, c)) for c in campos}, "p_lula22": r(u.p_lula22), "p_bolsonaro22": r(u.p_bolsonaro22),
              "aptos22": int(u.aptos22), "abst22": int(u.abst22), "p_abstencao22": r(u.p_abstencao22),
