@@ -200,7 +200,7 @@ footer { margin-top: 36px; padding-top: 16px; border-top: 1px solid var(--line);
   <header class="top">
     <div class="titulo">
       <div>
-        <div class="eyebrow">LADRI · Dados e Relações Internacionais · ASCES-UNITA</div>
+        <div class="eyebrow">LADRI · Laboratório de Dados e Relações Internacionais</div>
         <h1>Eleições 2026 · 1º turno presidencial</h1>
       </div>
       <div class="fonte" id="fonte-data"></div>
@@ -618,7 +618,7 @@ function placar() {
       <div style="width:${f.pct}%;background:var(--flavio)"></div><div style="width:${outros}%;background:var(--outros)"></div><div style="width:${l.pct}%;background:var(--lula)"></div>
     </div>
     <div class="cabo-legenda num"><span>Diferença: ${fmtInt.format(f.votos - l.votos)} votos (${fmtPP(f.pct - l.pct, 2)})</span><span>Demais candidatos: ${fmtP(outros)}</span></div>`;
-  const fonte = `Fonte: TSE, totalização de ${"05/10/2026"} (100% das seções apuradas). Elaboração LADRI.`;
+  const fonte = `Fonte: TSE, totalização de ${"05/10/2026"} (100% das seções apuradas).`;
   $("#fonte-data").textContent = "Apuração 100% · votação em 4 de outubro de 2026";
   $("#rodape-fonte").textContent = fonte;
 }
