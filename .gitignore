@@ -9,6 +9,11 @@ __pycache__/
 *.pyc
 .ipynb_checkpoints/
 
+# Artes para Instagram/stories: ficam só no computador do LADRI
+instagram/
+04_instagram.py
+05_stories_exterior.py
+
 # Ferramentas locais
 .claude/
 data/fontes/

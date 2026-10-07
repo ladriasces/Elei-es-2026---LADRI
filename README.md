@@ -18,7 +18,6 @@ Nenhum candidato alcançou mais de 50% dos votos válidos; os dois disputam o 2�
 
 - **Painel interativo** ([`docs/index.html`](docs/index.html)): visão geral, mapa por município, análise por região, análise por estado (com mesorregiões), abstenção (com comparação com 2022), brasileiros no exterior e comparação com 2022.
 - **Notebook didático** ([`analise_eleicoes_2026.ipynb`](analise_eleicoes_2026.ipynb)): como usar a API do TSE, estatística descritiva, mapas com geopandas, exterior e 2022.
-- **Artes para redes sociais** ([`instagram/`](instagram/)): mapas e gráficos em 1:1, 9:16 (stories) e 16:9.
 - **Tabelas tratadas** ([`data/processed/`](data/processed/)): resultados por candidato, UF, município e país, prontos para análise.
 
 ## Como reproduzir
@@ -28,15 +27,11 @@ pip install -r requirements.txt
 python 01_coleta.py          # baixa os resultados do TSE (2026 e 2022) e as malhas do IBGE (data/raw/)
 python 02_tratamento.py      # monta as tabelas em data/processed/
 python 03_painel.py          # gera o painel (painel/index.html e docs/index.html)
-python 04_instagram.py       # gera as artes 1:1 em instagram/
-python 05_stories_exterior.py  # gera as artes do exterior em 9:16 e 16:9
 ```
 
 Os dados brutos (~690 MB, incluindo o arquivo de 2022 do [Portal de Dados Abertos do TSE](https://dadosabertos.tse.jus.br/)) não ficam no repositório por causa do tamanho; o `01_coleta.py` baixa tudo.
 
 Para só explorar os dados, não é preciso rodar a coleta: o notebook usa as tabelas de `data/processed/` e baixa sozinho os poucos arquivos brutos de que precisa.
-
-As artes usam a fonte Segoe UI no Windows; em outros sistemas, usam a DejaVu Sans.
 
 ## Fontes
 
@@ -63,13 +58,10 @@ Esta plataforma foi desenvolvida pelo LADRI com o auxílio do **Claude**, assist
 01_coleta.py               coleta (TSE + IBGE)
 02_tratamento.py           tratamento e junções
 03_painel.py               gera o painel a partir de painel/template.html
-04_instagram.py            artes 1:1
-05_stories_exterior.py     artes do exterior (9:16 e 16:9)
 exterior_paises.py         cidade no exterior -> país/continente
 analise_eleicoes_2026.ipynb  notebook didático
 data/processed/            tabelas tratadas
 docs/                      site do GitHub Pages
 figuras/                   gráficos gerados pelo notebook
-instagram/                 artes para redes sociais
 painel/                    modelo e versão do painel
 ```
