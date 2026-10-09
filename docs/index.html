@@ -177,6 +177,14 @@ select { font: 500 .9rem var(--f-body); padding: 7px 10px; border: 1px solid var
 .tabela-wrap.alta { max-height: 470px; overflow: auto; }
 .tabela-wrap.alta th { position: sticky; top: 0; background: var(--surface); z-index: 1; }
 
+/* Bloco do repositório (Dados e método) */
+.repo { grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 10px 24px; border-color: var(--accent); }
+.repo-texto { display: grid; gap: 6px; min-width: 0; }
+.btn-repo { font: 700 .95rem var(--f-body); background: var(--accent); color: var(--accent-ink); text-decoration: none; padding: 10px 16px; border-radius: 8px; border-bottom: 3px solid color-mix(in srgb, var(--accent) 60%, #000); white-space: nowrap; justify-self: end; }
+.btn-repo:hover { filter: brightness(1.08); }
+.repo-url { grid-column: 1 / -1; justify-self: start; overflow-wrap: anywhere; }
+@media (max-width: 640px) { .repo { grid-template-columns: minmax(0, 1fr); } .btn-repo { justify-self: start; } }
+
 /* Tabelas */
 .tabela-wrap { overflow-x: auto; }
 table { border-collapse: collapse; width: 100%; font-size: .84rem; }
@@ -501,6 +509,14 @@ footer { margin-top: 36px; padding-top: 16px; border-top: 1px solid var(--line);
   <!-- SOBRE -->
   <section class="aba" id="aba-sobre" hidden>
     <div class="grade">
+      <div class="cartao c12 repo">
+        <div class="repo-texto">
+          <h2>Código e dados abertos</h2>
+          <p class="lede">Todo o código de coleta e tratamento, as tabelas tratadas e o notebook de análise estão no GitHub, para consulta e para quem quiser refazer as análises.</p>
+        </div>
+        <a class="btn-repo" href="https://github.com/ladriasces/Elei-es-2026---LADRI" target="_blank" rel="noopener">Ver repositório no GitHub →</a>
+        <code class="repo-url">github.com/ladriasces/Elei-es-2026---LADRI</code>
+      </div>
       <div class="cartao c12 texto">
         <h2>De onde vêm os dados</h2>
         <ul>
@@ -519,7 +535,6 @@ footer { margin-top: 36px; padding-top: 16px; border-top: 1px solid var(--line);
         </ul>
         <h3>Como esta plataforma foi feita</h3>
         <p>Esta plataforma foi desenvolvida pelo LADRI com o auxílio do <b>Claude</b>, assistente de inteligência artificial da Anthropic. O Claude ajudou a escrever o código de coleta, tratamento e análise dos dados, o painel interativo, o notebook e as visualizações. A definição dos recortes e a revisão do conteúdo foram feitas pela equipe do LADRI, e os totais foram conferidos com os números oficiais divulgados pelo TSE.</p>
-        <p>Código, dados tratados e notebook de análise: <a href="https://github.com/ladriasces/Elei-es-2026---LADRI" target="_blank" rel="noopener">github.com/ladriasces/Elei-es-2026---LADRI</a>.</p>
       </div>
     </div>
   </section>
