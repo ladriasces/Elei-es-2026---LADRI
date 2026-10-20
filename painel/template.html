@@ -280,7 +280,14 @@ code { font-size: .85em; background: var(--bg); padding: 1px 5px; border-radius:
 footer { margin-top: 36px; padding-top: 16px; border-top: 1px solid var(--line); font-size: .8rem; color: var(--muted); display: grid; gap: 4px; }
 footer a, .contato a { color: var(--ink); text-underline-offset: 2px; }
 footer a:hover, .contato a:hover { color: var(--accent); }
-.contato ul { list-style: none; padding: 0; margin: 8px 0 0; display: flex; flex-wrap: wrap; gap: 8px 28px; font-weight: 600; }
+.contato ul { list-style: none; padding: 0; margin: 8px 0 0; display: flex; flex-wrap: wrap; gap: 10px 32px; font-weight: 600; }
+.contato ul a { display: inline-flex; align-items: center; gap: 10px; }
+.contato .ico { width: 30px; height: 30px; }
+.redes { display: flex; align-items: center; gap: 12px; }
+.redes a { display: inline-flex; }
+.redes .ico { width: 24px; height: 24px; }
+.ico { flex: none; transition: transform .15s; }
+a:hover > .ico { transform: translateY(-2px); }
 @media (max-width: 560px) {
   .wrap { padding-inline: 16px; }
   .meio { display: none; }
@@ -685,8 +692,8 @@ footer a:hover, .contato a:hover { color: var(--accent); }
         <h2>Fale com o LADRI</h2>
         <p class="lede">Dúvidas, sugestões ou interesse em usar os dados em aula ou em pesquisa? Fale com a equipe do laboratório.</p>
         <ul>
-          <li>Instagram: <a href="https://www.instagram.com/ladri_asces/" target="_blank" rel="noopener">@ladri_asces</a></li>
-          <li>E-mail: <a href="mailto:ladri.lapri.asces@gmail.com">ladri.lapri.asces@gmail.com</a></li>
+          <li><a href="https://www.instagram.com/ladri_asces/" target="_blank" rel="noopener"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><defs><radialGradient id="ig-1" cx="30%" cy="107%" r="150%"><stop offset="0" stop-color="#fdf497"/><stop offset=".05" stop-color="#fdf497"/><stop offset=".45" stop-color="#fd5949"/><stop offset=".6" stop-color="#d6249f"/><stop offset=".9" stop-color="#285aeb"/></radialGradient></defs><rect width="24" height="24" rx="6" fill="url(#ig-1)"/><rect x="5" y="5" width="14" height="14" rx="4" fill="none" stroke="#fff" stroke-width="1.8"/><circle cx="12" cy="12" r="3.3" fill="none" stroke="#fff" stroke-width="1.8"/><circle cx="16.3" cy="7.7" r="1.05" fill="#fff"/></svg>@ladri_asces</a></li>
+          <li><a href="mailto:ladri.lapri.asces@gmail.com"><svg class="ico" viewBox="0 2.5 52 39.5" aria-hidden="true"><path fill="#4285f4" d="M3.6 42h8.4V21.6L0 12.6v25.8C0 40.4 1.6 42 3.6 42z"/><path fill="#34a853" d="M40 42h8.4c2 0 3.6-1.6 3.6-3.6V12.6l-12 9z"/><path fill="#fbbc04" d="M40 6v15.6l12-9V7.8c0-4.45-5.08-7-8.64-4.32z"/><path fill="#ea4335" d="M12 21.6V6l14 10.5L40 6v15.6L26 32.1z"/><path fill="#c5221f" d="M0 7.8v4.8l12 9V6L8.64 3.48C5.08.8 0 3.35 0 7.8z"/></svg>ladri.lapri.asces@gmail.com</a></li>
         </ul>
       </div>
       <div class="cartao c12 texto">
@@ -715,7 +722,10 @@ footer a:hover, .contato a:hover { color: var(--accent); }
   <footer>
     <span id="rodape-fonte"></span>
     <span>Elaboração: LADRI — Laboratório de Dados e Relações Internacionais, ASCES-UNITA.</span>
-    <span>Contato: <a href="https://www.instagram.com/ladri_asces/" target="_blank" rel="noopener">Instagram @ladri_asces</a> · <a href="mailto:ladri.lapri.asces@gmail.com">ladri.lapri.asces@gmail.com</a></span>
+    <span class="redes">Contato:
+      <a href="https://www.instagram.com/ladri_asces/" target="_blank" rel="noopener" aria-label="Instagram do LADRI (@ladri_asces)" title="Instagram @ladri_asces"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><defs><radialGradient id="ig-2" cx="30%" cy="107%" r="150%"><stop offset="0" stop-color="#fdf497"/><stop offset=".05" stop-color="#fdf497"/><stop offset=".45" stop-color="#fd5949"/><stop offset=".6" stop-color="#d6249f"/><stop offset=".9" stop-color="#285aeb"/></radialGradient></defs><rect width="24" height="24" rx="6" fill="url(#ig-2)"/><rect x="5" y="5" width="14" height="14" rx="4" fill="none" stroke="#fff" stroke-width="1.8"/><circle cx="12" cy="12" r="3.3" fill="none" stroke="#fff" stroke-width="1.8"/><circle cx="16.3" cy="7.7" r="1.05" fill="#fff"/></svg></a>
+      <a href="mailto:ladri.lapri.asces@gmail.com" aria-label="E-mail do LADRI (ladri.lapri.asces@gmail.com)" title="ladri.lapri.asces@gmail.com"><svg class="ico" viewBox="0 2.5 52 39.5" aria-hidden="true"><path fill="#4285f4" d="M3.6 42h8.4V21.6L0 12.6v25.8C0 40.4 1.6 42 3.6 42z"/><path fill="#34a853" d="M40 42h8.4c2 0 3.6-1.6 3.6-3.6V12.6l-12 9z"/><path fill="#fbbc04" d="M40 6v15.6l12-9V7.8c0-4.45-5.08-7-8.64-4.32z"/><path fill="#ea4335" d="M12 21.6V6l14 10.5L40 6v15.6L26 32.1z"/><path fill="#c5221f" d="M0 7.8v4.8l12 9V6L8.64 3.48C5.08.8 0 3.35 0 7.8z"/></svg></a>
+    </span>
   </footer>
 </div>
 <div class="tip" id="tip" hidden></div>
