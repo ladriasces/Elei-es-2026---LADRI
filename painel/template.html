@@ -199,6 +199,9 @@ select { font: 500 .9rem var(--f-body); padding: 7px 10px; border: 1px solid var
 .progresso > div { height: 100%; background: var(--accent); }
 .andamento { display: grid; gap: 4px; font-size: .8rem; max-height: 640px; overflow: auto; }
 .andamento .linha-barra { grid-template-columns: 130px 1fr 54px; }
+.aba .aviso-turno { display: none; }
+.aba.sem-dados .aviso-turno { display: block; }
+.aba.sem-dados > :not(.aviso-turno) { display: none !important; }
 .aviso-vivo { padding: 18px; border: 1px dashed var(--line-strong); border-radius: 10px; color: var(--ink-2); text-align: center; }
 
 /* Tabelas */
@@ -236,7 +239,7 @@ footer { margin-top: 36px; padding-top: 16px; border-top: 1px solid var(--line);
       </div>
       <div class="turno-box">
         <div class="seg" id="ctl-turno" role="group" aria-label="Turno exibido nas abas">
-          <button data-v="1" aria-pressed="true">1º turno</button><button data-v="2" aria-pressed="false" disabled title="Disponível quando a apuração do 2º turno começar">2º turno</button>
+          <button data-v="1" aria-pressed="true">1º turno</button><button data-v="2" aria-pressed="false">2º turno</button>
         </div>
         <div class="fonte" id="fonte-data"></div>
       </div>
@@ -246,8 +249,8 @@ footer { margin-top: 36px; padding-top: 16px; border-top: 1px solid var(--line);
 
   <nav class="abas" aria-label="Seções">
     <div class="lista" role="tablist">
+      <button role="tab" data-aba="aovivo" aria-selected="false" hidden><span class="ponto-vivo" id="ponto-vivo"></span>Apuração ao vivo</button>
       <button role="tab" data-aba="geral" aria-selected="true">Visão geral</button>
-      <button role="tab" data-aba="aovivo" aria-selected="false"><span class="ponto-vivo" id="ponto-vivo"></span>2º turno ao vivo</button>
       <button role="tab" data-aba="mapa" aria-selected="false">Mapa do Brasil</button>
       <button role="tab" data-aba="regiao" aria-selected="false">Por região</button>
       <button role="tab" data-aba="estado" aria-selected="false">Por estado</button>
@@ -761,6 +764,18 @@ function meioPlacar(dados) {
   return `<strong>Apuração em andamento</strong>${fmtP(pst, 2)} das seções apuradas`;
 }
 function placar() {
+  if (semDados2()) {
+    $("#placar").innerHTML = `
+    <div class="placar-nomes">
+      <div class="cand-hero"><span class="pct num" style="color:var(--flavio)">—</span><span class="nm">Flávio Bolsonaro <span class="muted">· PL</span></span></div>
+      <div class="meio"><strong>2º turno em 25 de outubro</strong>Apuração a partir das 17h (horário de Brasília)</div>
+      <div class="cand-hero dir"><span class="pct num" style="color:var(--lula)">—</span><span class="nm">Lula <span class="muted">· PT</span></span></div>
+    </div>`;
+    $("#fonte-data").textContent = "Votação em 25 de outubro de 2026";
+    $("#rodape-fonte").textContent = "Fonte: TSE, API de divulgação de resultados.";
+    $("#h1-turno").textContent = "2º turno";
+    return;
+  }
   const f = D.candidatos.find(c => c.n === "22"), l = D.candidatos.find(c => c.n === "13");
   const outros = Math.max(0, 100 - f.pct - l.pct);
   const st = D.status || {}, pst = pstNum(st.pst);
@@ -1555,32 +1570,35 @@ function atualizarVivo(forcar = false) {
   if (!DADOS.t2) { VIVO.d2 = montarAoVivo(); VIVO.X = derivar(VIVO.d2); }
   liberarTurno2();
   mostrarStatusVivo();
-  if (TURNO === 2 && !DADOS.t2) { prepararTurno(VIVO.d2); placar(); atualizarFaixa(); }
+  if (TURNO === 2 && !DADOS.t2) { prepararTurno(dadosTurno2() || DADOS.t1); placar(); atualizarFaixa(); }
   feitos.clear();
-  if (abaAtual === "aovivo" || TURNO === 2) { RENDER[abaAtual](); feitos.add(abaAtual); }
+  if (TURNO === 2) abrir(abaAtual);
 }
 
 /* ---------- seletor de turno ---------- */
 const dadosTurno2 = () => DADOS.t2 || (VIVO.d2 && VIVO.d2.resumo.validos > 0 ? VIVO.d2 : null);
-function liberarTurno2() {
-  const b = $('#ctl-turno button[data-v="2"]'), ok = !!dadosTurno2();
-  b.disabled = !ok;
-  b.title = ok ? "" : "Disponível quando a apuração do 2º turno começar";
-}
+// 2º turno escolhido, mas a apuração ainda não trouxe votos: as abas mostram um aviso no lugar dos dados
+const semDados2 = () => TURNO === 2 && !dadosTurno2();
+const ABAS_SEM_AVISO = ["aovivo", "sobre"];
+function liberarTurno2() { /* o seletor fica sempre liberado; as abas sem dados mostram um aviso */ }
 function atualizarFaixa() {
   const fx = $("#faixa-parcial");
   const parcial = TURNO === 2 && D.status && !D.status.final;
   fx.hidden = !parcial;
   if (parcial) fx.textContent = `Dados parciais do 2º turno: ${fmtP(pstNum(D.status.pst), 2)} das seções apuradas${VIVO.atualizado ? `, lidos às ${VIVO.atualizado.toLocaleTimeString("pt-BR")}` : ""}. Os números mudam a cada minuto até a totalização final.`;
 }
-function usarTurno(t) {
-  if (t === 2 && !dadosTurno2()) { marcarSeg("#ctl-turno", String(TURNO)); return; }
+// navegar = true quando a pessoa clica no seletor: o 2º turno abre na apuração ao vivo
+function usarTurno(t, navegar = true) {
   TURNO = t;
   marcarSeg("#ctl-turno", String(t));
-  prepararTurno(t === 1 ? DADOS.t1 : dadosTurno2());
+  prepararTurno(t === 1 ? DADOS.t1 : (dadosTurno2() || DADOS.t1));
+  $('nav.abas button[data-aba="aovivo"]').hidden = t !== 2;
   atualizarFaixa();
-  feitos.clear(); placar(); RENDER[abaAtual](); feitos.add(abaAtual);
+  feitos.clear(); placar();
   try { localStorage.setItem("turno", String(t)); } catch (e) {}
+  if (!navegar) return;
+  if (t === 2) abrir("aovivo");
+  else abrir(abaAtual === "aovivo" ? "geral" : abaAtual);
 }
 
 /* ---------- aba "2º turno ao vivo" ---------- */
@@ -1754,20 +1772,31 @@ const feitos = new Set();
 let abaAtual = "geral";
 function abrir(aba, render = true) {
   if (!RENDER[aba]) aba = "geral";
+  if (aba === "aovivo" && TURNO !== 2) usarTurno(2, false);   // links antigos para #aovivo
   abaAtual = aba;
   document.querySelectorAll("nav.abas button").forEach(b => b.setAttribute("aria-selected", b.dataset.aba === aba ? "true" : "false"));
   document.querySelectorAll("section.aba").forEach(s => s.hidden = s.id !== "aba-" + aba);
-  if (render && !feitos.has(aba)) { RENDER[aba](); feitos.add(aba); }
+  const vazia = semDados2() && !ABAS_SEM_AVISO.includes(aba);
+  $("#aba-" + aba).classList.toggle("sem-dados", vazia);
+  if (render && !vazia && !feitos.has(aba)) { RENDER[aba](); feitos.add(aba); }
   try { history.replaceState(null, "", "#" + aba); } catch (e) {}
   try { localStorage.setItem("aba", aba); } catch (e) {}
 }
 document.querySelectorAll("nav.abas button").forEach(b => b.addEventListener("click", () => abrir(b.dataset.aba)));
 
 // Re-renderiza ao trocar o tema (as cores vêm das variáveis CSS)
-function rerender() { feitos.clear(); placar(); RENDER[abaAtual](); feitos.add(abaAtual); }
+function rerender() { feitos.clear(); placar(); abrir(abaAtual); }
 matchMedia("(prefers-color-scheme: dark)").addEventListener("change", rerender);
 new MutationObserver(rerender).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
 
+// Aviso exibido nas abas do 2º turno enquanto a apuração não começa
+document.querySelectorAll("section.aba").forEach(sec => {
+  if (ABAS_SEM_AVISO.includes(sec.id.replace("aba-", ""))) return;
+  const av = el("div", { className: "aviso-vivo aviso-turno" },
+    `Os resultados do 2º turno aparecem aqui a partir das 17h (horário de Brasília) de domingo, 25 de outubro. Enquanto isso, acompanhe a <a href="#aovivo">apuração ao vivo</a> ou volte ao 1º turno no seletor acima.`);
+  av.querySelector("a").addEventListener("click", ev => { ev.preventDefault(); abrir("aovivo"); });
+  sec.prepend(av);
+});
 placar();
 initBusca();
 initSeletorUF();
@@ -1776,13 +1805,12 @@ if (!inicial) { try { inicial = localStorage.getItem("aba") || "geral"; } catch 
 let turnoSalvo = 1;
 try { turnoSalvo = +(localStorage.getItem("turno") || 1); } catch (e) {}
 if (DADOS.t2) { VIVO.d2 = DADOS.t2; VIVO.X = derivar(DADOS.t2); VIVO.estado = DADOS.t2.status.final ? "encerrada" : "apurando"; }
-liberarTurno2();
-if (turnoSalvo === 2 && DADOS.t2) usarTurno(2);
+if (turnoSalvo === 2 || inicial === "aovivo") usarTurno(2, false);
 abrir(inicial);
 // Acompanhamento ao vivo do 2º turno enquanto não houver resultado final gravado no painel
 if (!(DADOS.t2 && DADOS.t2.status.final)) {
   carregarCurva();
-  cicloVivo().then(() => { if (turnoSalvo === 2 && TURNO !== 2 && dadosTurno2()) usarTurno(2); });
+  cicloVivo();
   document.addEventListener("visibilitychange", () => { if (!document.hidden) { cicloVivo(); if (!VIVO.rastreando && VIVO.estado !== "aguardando") rastrearMunicipios(); } });
 } else { mostrarStatusVivo(); }
 </script>
