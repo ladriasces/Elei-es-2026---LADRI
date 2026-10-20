@@ -35,7 +35,7 @@ Para o 2º turno, use `--turno 2` na coleta e no tratamento (as saídas vão par
 
 ## 2º turno ao vivo
 
-Ao escolher "2º turno" no seletor, a aba **Apuração ao vivo** lê a API do TSE diretamente no navegador de quem acessa o site, a cada minuto: placar, % de seções apuradas, andamento por estado, mapa por estado e por município (que vai se completando), curva da apuração e a comparação com o 1º turno. Nada precisa ficar ligado no servidor do LADRI. Os números são oficiais e parciais; a plataforma não faz projeções.
+Ao escolher "2º turno" no seletor, a aba **Apuração ao vivo** lê a API do TSE diretamente no navegador de quem acessa o site, a cada minuto: placar, % de seções apuradas, andamento por estado, mapa por estado e por município (que vai se completando), curva da apuração, a apuração dos brasileiros no exterior (mapa-múndi, continentes e países) e a comparação com o 1º turno. Nada precisa ficar ligado no servidor do LADRI. Os números são oficiais e parciais; a plataforma não faz projeções.
 
 O motor ao vivo (em `painel/template.html`) reproduz em JavaScript as mesmas regras do tratamento em Python (`tse_comum.py`). Num teste com a apuração completa simulada, os 115.300 valores montados no navegador (candidatos, resumo, estados, municípios, países e cidades no exterior) foram idênticos aos gerados pelo pipeline.
 

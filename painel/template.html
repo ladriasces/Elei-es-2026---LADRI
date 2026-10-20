@@ -365,6 +365,26 @@ footer { margin-top: 36px; padding-top: 16px; border-top: 1px solid var(--line);
       </div>
     </div>
     <div class="cab">
+      <h2>Brasileiros no exterior</h2>
+      <p class="lede">Apuração dos votos dados nas seções instaladas em embaixadas e consulados de 133 países. A votação no exterior segue o horário local de cada país, por isso a apuração pode andar em ritmo diferente da do Brasil.</p>
+    </div>
+    <div class="kpis" id="vivo-ext-kpis"></div>
+    <div class="grade">
+      <div class="cartao c8">
+        <div class="mapa" id="vivo-mundo"></div>
+        <div class="legenda" id="vivo-leg-mundo"></div>
+        <p class="nota">Área da bolha proporcional aos eleitores aptos no país. Cor clara: apuração parcial no país. Cinza: ainda sem dados.</p>
+      </div>
+      <div class="cartao c4">
+        <h3>Por continente</h3>
+        <div class="grafico" id="vivo-continentes"></div>
+      </div>
+      <div class="cartao c12">
+        <h3>Países com mais eleitores</h3>
+        <div class="tabela-wrap" id="vivo-t-paises"></div>
+      </div>
+    </div>
+    <div class="cab">
       <h2>Do 1º para o 2º turno</h2>
       <p class="lede">Como os votos se moveram entre 4 e 25 de outubro. Enquanto a apuração não termina, as comparações usam só os locais já apurados.</p>
     </div>
@@ -1396,35 +1416,42 @@ function exterior() {
     { l: "Flávio no exterior", v: fmtP(ZZ.p_flavio), d: `Jair em 2022: ${fmtP(ZZ.p_bolsonaro22)}`, cor: "var(--flavio)" },
   ]);
   mapaMundo();
-  // continentes
-  const agg = d3.rollups(PAISES, v => ({ el: d3.sum(v, d => d.eleitores), val: d3.sum(v, d => d.validos), f: d3.sum(v, d => d.v_flavio), l: d3.sum(v, d => d.v_lula) }), d => d.continente)
-    .sort((a, b) => b[1].el - a[1].el);
-  barrasEmpilhadas("#g-continentes", agg.map(([c, a]) => { const o = { p_flavio: 100 * a.f / a.val, p_lula: 100 * a.l / a.val };
-    return { rot: c, partes: partesFL(o), tip: `<b>${c}</b>${linhaTip(css("--flavio"), "Flávio", fmtP(o.p_flavio))}${linhaTip(css("--lula"), "Lula", fmtP(o.p_lula))}${linhaTip(null, "Eleitores", fmtInt.format(a.el))}` }; }), { ml: 150, lh: 34 });
+  continentes("#g-continentes", PAISES);
   const top = PAISES.slice(0, 20);
-  $("#t-paises").innerHTML = `<table><thead><tr><th>País</th><th>Eleitores</th><th>Compar.</th><th>Flávio</th><th>Lula</th><th></th><th>Lula vs 2022</th></tr></thead><tbody>${top.map(p => {
+  $("#t-paises").innerHTML = tabelaPaises(top);
+}
+// Resultado por continente (barras Flávio / Outros / Lula)
+function continentes(alvo, paises) {
+  const agg = d3.rollups(paises, v => ({ el: d3.sum(v, d => d.eleitores), val: d3.sum(v, d => d.validos), f: d3.sum(v, d => d.v_flavio), l: d3.sum(v, d => d.v_lula) }), d => d.continente)
+    .sort((a, b) => b[1].el - a[1].el);
+  barrasEmpilhadas(alvo, agg.map(([c, a]) => { const o = { p_flavio: 100 * a.f / a.val, p_lula: 100 * a.l / a.val };
+    return { rot: c, partes: partesFL(o), tip: `<b>${c}</b>${linhaTip(css("--flavio"), "Flávio", fmtP(o.p_flavio))}${linhaTip(css("--lula"), "Lula", fmtP(o.p_lula))}${linhaTip(null, "Eleitores", fmtInt.format(a.el))}` }; }), { ml: 150, lh: 34 });
+}
+function tabelaPaises(top) {
+  return `<table><thead><tr><th>País</th><th>Eleitores</th><th>Compar.</th><th>Flávio</th><th>Lula</th><th></th><th>Lula vs 2022</th></tr></thead><tbody>${top.map(p => {
     const d = p.p_lula22 == null ? null : p.p_lula - p.p_lula22;
     return `<tr><td>${p.pais}</td><td>${fmtInt.format(p.eleitores)}</td><td>${fmtP(100 - p.p_abstencao, 0)}</td><td>${fmtP(p.p_flavio)}</td><td>${fmtP(p.p_lula)}</td><td>${mini(p)}</td><td class="${d > 0 ? "pos" : "neg"}">${fmtPP(d)}</td></tr>`; }).join("")}</tbody></table>`;
 }
-function mapaMundo() {
-  const box = $("#mapa-mundo"); box.innerHTML = "";
+function mapaMundo({ alvo = "#mapa-mundo", leg = "#leg-mundo", paises = PAISES, ind = estadoExt.ind, opacidade = null } = {}) {
+  const box = $(alvo); box.innerHTML = "";
   const W = larguraGrafico(box, 1160), H = CELULAR.matches ? Math.round(W * 0.56) : 560;
   const proj = d3.geoNaturalEarth1().fitExtent([[0, 10], [W, H - 10]], G.mundo);
   const path = d3.geoPath(proj);
   const svg = d3.select(box).append("svg").attr("viewBox", `0 0 ${W} ${H}`).attr("role", "img").attr("aria-label", "Mapa-múndi com eleitores brasileiros por país");
   svg.append("g").selectAll("path").data(G.mundo.features).join("path").attr("class", "terra").attr("d", path)
     .style("fill", f => f.properties.id === "BRA" ? css("--line-strong") : null);
-  const esc = estadoExt.ind === "margem"
+  const esc = ind === "margem"
     ? { cor: d3.scaleDiverging([-50, 0, 50], t => t < .5 ? d3.interpolateLab(css("--lula"), css("--mid"))(t * 2) : d3.interpolateLab(css("--mid"), css("--flavio"))((t - .5) * 2)).clamp(true), dom: [-50, 50], ticks: ["Lula +50", "0", "Flávio +50"], rot: "Margem: Flávio − Lula (p.p.)" }
     : seq(css("--abst"), [30, 90], "Abstenção (% dos aptos)");
-  const rr = d3.scaleSqrt([0, d3.max(PAISES, d => d.eleitores)], [0, CELULAR.matches ? 26 : 48]);
-  const dados = PAISES.filter(p => p.lonlat).sort((a, b) => b.eleitores - a.eleitores);
-  svg.append("g").selectAll("circle").data(dados).join("circle").attr("class", "bolha")
+  const rr = d3.scaleSqrt([0, d3.max(paises, d => d.eleitores)], [0, CELULAR.matches ? 26 : 48]);
+  const dados = paises.filter(p => p.lonlat).sort((a, b) => b.eleitores - a.eleitores);
+  const bolhas = svg.append("g").selectAll("circle").data(dados).join("circle").attr("class", "bolha")
     .attr("cx", d => proj(d.lonlat)[0]).attr("cy", d => proj(d.lonlat)[1]).attr("r", d => Math.max(2.5, rr(d.eleitores)))
-    .attr("fill", d => { const v = d[estadoExt.ind]; return v == null ? css("--outros") : esc.cor(v); })
+    .attr("fill", d => { const v = d[ind]; return v == null ? css("--outros") : esc.cor(v); })
     .on("mousemove", (ev, d) => mostrarTip(ev, `<b>${d.pais}</b><div class="muted" style="margin-bottom:4px">${d.continente} · ${d.cidades} ${d.cidades > 1 ? "cidades" : "cidade"}</div>${linhaTip(css("--flavio"), "Flávio", fmtP(d.p_flavio))}${linhaTip(css("--lula"), "Lula", fmtP(d.p_lula))}${linhaTip(null, "Eleitores", fmtInt.format(d.eleitores))}${linhaTip(null, "Compareceram", fmtInt.format(d.comparecimento))}${linhaTip(null, "Abstenção", fmtP(d.p_abstencao))}`))
     .on("mouseleave", esconderTip);
-  legenda("#leg-mundo", estadoExt.ind, esc);
+  if (opacidade) bolhas.style("fill-opacity", opacidade);
+  legenda(leg, ind, esc);
 }
 
 /* ---------- aba 2022 × 2026 ---------- */
@@ -1733,7 +1760,7 @@ function aovivo() {
   if (!d2 || !X) {
     $("#vivo-placar").innerHTML = `<div class="aviso-vivo">A apuração do 2º turno começa às 17h (horário de Brasília) de domingo, 25 de outubro. Esta página lê os resultados do TSE sozinha, a cada minuto: deixe-a aberta e os mapas e gráficos vão se formando.</div>`;
     ["#vivo-kpis", "#vivo-comp-kpis"].forEach(a => { $(a).innerHTML = ""; });
-    andamentoVivo(); mapaVivo(null); curvaVivo(); compararTurnos(null);
+    andamentoVivo(); mapaVivo(null); curvaVivo(); exteriorVivo(null); compararTurnos(null);
     return;
   }
   const f = d2.candidatos.find(c => c.n === "22"), l = d2.candidatos.find(c => c.n === "13"), Rv = d2.resumo;
@@ -1746,7 +1773,7 @@ function aovivo() {
     { l: "Brancos e nulos", v: fmtP(+Rv.p_brancos_nulos), d: `1º turno: ${fmtP(+T1.R.p_brancos_nulos)}` },
     { l: "Locais com apuração concluída", v: fmtInt.format(concluidos), d: `de ${fmtInt.format(TOTAL_LOCAIS)} municípios e cidades no exterior` },
   ]);
-  andamentoVivo(); mapaVivo(X); curvaVivo(); compararTurnos(X);
+  andamentoVivo(); mapaVivo(X); curvaVivo(); exteriorVivo(X); compararTurnos(X);
 }
 function mapaVivo(X) {
   const isMun = estadoVivo.nivel === "mun", ind = estadoVivo.ind, esc = escala(ind);
@@ -1758,6 +1785,48 @@ function mapaVivo(X) {
   });
   r.feats.attr("fill-opacity", f => { const p = isMun ? pstMunicipio(f.properties.id) : pstUF(f.properties.id); return p != null && p > 0 && p < 100 ? .45 : 1; });
   legenda("#vivo-leg", ind, esc);
+}
+// Exterior ao vivo: % de seções apuradas por país, a partir dos arquivos de cada cidade
+function statusPaises() {
+  const m = new Map();
+  for (const [cod, , iso3] of BASE.ext) {
+    const j = VIVO.mun.get(cod), s = m.get(iso3) || { st: 0, ts: 0 };
+    if (j) { s.st += nTSE(j.s.st); s.ts += nTSE(j.s.ts); }
+    m.set(iso3, s);
+  }
+  m.forEach(s => { s.p = DADOS.t2 ? 100 : s.ts ? 100 * s.st / s.ts : 0; });
+  return m;
+}
+function exteriorVivo(X) {
+  const pz = DADOS.t2 ? 100 : pstUF("zz") || 0;
+  const codsExt = BASE.ext.map(c => c[0]), concluidas = DADOS.t2 ? codsExt.length : codsExt.filter(c => VIVO.finais.has(c)).length;
+  const aviso = `<div class="aviso-vivo">Os resultados do exterior aparecem aqui assim que as primeiras seções forem totalizadas.</div>`;
+  if (!X || !X.ZZ || !X.ZZ.validos) {
+    kpis("#vivo-ext-kpis", [{ l: "Seções apuradas no exterior", v: fmtP(pz, pz === 100 || pz === 0 ? 0 : 2), d: `${concluidas} de ${codsExt.length} cidades concluídas` }]);
+    $("#vivo-mundo").innerHTML = $("#vivo-continentes").innerHTML = aviso;
+    $("#vivo-leg-mundo").innerHTML = $("#vivo-t-paises").innerHTML = "";
+    return;
+  }
+  const z = X.ZZ, z1 = T1.ZZ;
+  kpis("#vivo-ext-kpis", [
+    { l: "Seções apuradas no exterior", v: fmtP(pz, pz === 100 ? 0 : 2), d: `${concluidas} de ${codsExt.length} cidades concluídas` },
+    { l: "Lula no exterior", v: fmtP(z.p_lula), d: `1º turno: ${fmtP(z1.p_lula)}`, cor: "var(--lula)" },
+    { l: "Flávio no exterior", v: fmtP(z.p_flavio), d: `1º turno: ${fmtP(z1.p_flavio)}`, cor: "var(--flavio)" },
+    { l: "Abstenção no exterior", v: fmtP(z.p_abstencao), d: `1º turno: ${fmtP(z1.p_abstencao)} · nas seções apuradas`, cor: "var(--abst)" },
+  ]);
+  const st = statusPaises();
+  // Tamanho das bolhas pelo total de aptos (1º turno), para não "crescerem" durante a apuração
+  const aptos = new Map(T1.PAISES.map(p => [p.iso3, p.eleitores]));
+  const paises = X.PAISES.map(p => ({ ...p, eleitores: aptos.get(p.iso3) || p.eleitores, margem: p.validos > 0 ? p.margem : null }));
+  mapaMundo({ alvo: "#vivo-mundo", leg: "#vivo-leg-mundo", paises, ind: "margem",
+    opacidade: d => { const s = st.get(d.iso3); return s && s.p > 0 && s.p < 100 ? .45 : .9; } });
+  continentes("#vivo-continentes", X.PAISES.filter(p => p.validos > 0));
+  const p2 = new Map(X.PAISES.map(p => [p.iso3, p]));
+  const linhas = T1.PAISES.slice(0, 15).map(p1 => ({ p1, p2: p2.get(p1.iso3), s: st.get(p1.iso3) }));
+  $("#vivo-t-paises").innerHTML = `<table><thead><tr><th>País</th><th>Aptos</th><th>Apuração</th><th>Flávio</th><th>Lula</th><th></th><th>Lula no 1º turno</th></tr></thead><tbody>${linhas.map(({ p1, p2: q, s }) => {
+    const tem = q && q.validos > 0, ap = !s || s.p === 0 ? "sem dados" : s.p >= 100 ? "concluída" : fmtP(s.p, 0);
+    return `<tr><td>${p1.pais}</td><td>${fmtInt.format(p1.eleitores)}</td><td>${ap}</td><td>${tem ? fmtP(q.p_flavio) : "—"}</td><td>${tem ? fmtP(q.p_lula) : "—"}</td><td>${tem ? mini(q) : ""}</td><td>${fmtP(p1.p_lula)}</td></tr>`;
+  }).join("")}</tbody></table>`;
 }
 function andamentoVivo() {
   const nomes = new Map(DADOS.t1.ufs.map(u => [u.uf.toLowerCase(), u.uf === "ZZ" ? "Exterior" : u.nome]));
