@@ -1826,9 +1826,9 @@ function exteriorVivo(X) {
   mapaMundo({ alvo: "#vivo-mundo", leg: "#vivo-leg-mundo", paises, ind: "margem",
     opacidade: d => { const x = st.get(d.iso3); return x && x.p > 0 && x.p < 100 ? .45 : .9; } });
   const linhas = T1.PAISES.slice(0, 15).map(p1 => ({ p1, p2: p2.get(p1.iso3), s: st.get(p1.iso3) }));
-  $("#vivo-t-paises").innerHTML = `<table><thead><tr><th>País</th><th>Aptos</th><th>Apuração</th><th>Flávio</th><th>Lula</th><th></th><th>Lula no 1º turno</th></tr></thead><tbody>${linhas.map(({ p1, p2: q, s }) => {
+  $("#vivo-t-paises").innerHTML = `<table><thead><tr><th>País</th><th>Aptos</th><th>Apuração</th><th>Flávio</th><th>Lula</th><th></th><th>Flávio no 1º turno</th><th>Lula no 1º turno</th></tr></thead><tbody>${linhas.map(({ p1, p2: q, s }) => {
     const tem = q && q.validos > 0, ap = !s || s.p === 0 ? "sem dados" : s.p >= 100 ? "concluída" : fmtP(s.p, 0);
-    return `<tr><td>${p1.pais}</td><td>${fmtInt.format(p1.eleitores)}</td><td>${ap}</td><td>${tem ? fmtP(q.p_flavio) : "—"}</td><td>${tem ? fmtP(q.p_lula) : "—"}</td><td>${tem ? mini(q) : ""}</td><td>${fmtP(p1.p_lula)}</td></tr>`;
+    return `<tr><td>${p1.pais}</td><td>${fmtInt.format(p1.eleitores)}</td><td>${ap}</td><td>${tem ? fmtP(q.p_flavio) : "—"}</td><td>${tem ? fmtP(q.p_lula) : "—"}</td><td>${tem ? mini(q) : ""}</td><td>${fmtP(p1.p_flavio)}</td><td>${fmtP(p1.p_lula)}</td></tr>`;
   }).join("")}</tbody></table>`;
 }
 function andamentoVivo() {
