@@ -272,6 +272,9 @@ tr.destaque td { background: var(--accent-soft); font-weight: 600; }
 .texto ul, .texto ol { margin: 0; padding-left: 1.2em; display: grid; gap: 6px; }
 code { font-size: .85em; background: var(--bg); padding: 1px 5px; border-radius: 4px; border: 1px solid var(--line); }
 footer { margin-top: 36px; padding-top: 16px; border-top: 1px solid var(--line); font-size: .8rem; color: var(--muted); display: grid; gap: 4px; }
+footer a, .contato a { color: var(--ink); text-underline-offset: 2px; }
+footer a:hover, .contato a:hover { color: var(--accent); }
+.contato ul { list-style: none; padding: 0; margin: 8px 0 0; display: flex; flex-wrap: wrap; gap: 8px 28px; font-weight: 600; }
 @media (max-width: 560px) {
   .wrap { padding-inline: 16px; }
   .meio { display: none; }
@@ -669,6 +672,14 @@ footer { margin-top: 36px; padding-top: 16px; border-top: 1px solid var(--line);
         <a class="btn-repo" href="https://github.com/ladriasces/Elei-es-2026---LADRI" target="_blank" rel="noopener">Ver repositório no GitHub →</a>
         <code class="repo-url">github.com/ladriasces/Elei-es-2026---LADRI</code>
       </div>
+      <div class="cartao c12 texto contato">
+        <h2>Fale com o LADRI</h2>
+        <p class="lede">Dúvidas, sugestões ou interesse em usar os dados em aula ou em pesquisa? Fale com a equipe do laboratório.</p>
+        <ul>
+          <li>Instagram: <a href="https://www.instagram.com/ladri_asces/" target="_blank" rel="noopener">@ladri_asces</a></li>
+          <li>E-mail: <a href="mailto:ladri.lapri.asces@gmail.com">ladri.lapri.asces@gmail.com</a></li>
+        </ul>
+      </div>
       <div class="cartao c12 texto">
         <h2>De onde vêm os dados</h2>
         <ul>
@@ -695,6 +706,7 @@ footer { margin-top: 36px; padding-top: 16px; border-top: 1px solid var(--line);
   <footer>
     <span id="rodape-fonte"></span>
     <span>Elaboração: LADRI — Laboratório de Dados e Relações Internacionais, ASCES-UNITA.</span>
+    <span>Contato: <a href="https://www.instagram.com/ladri_asces/" target="_blank" rel="noopener">Instagram @ladri_asces</a> · <a href="mailto:ladri.lapri.asces@gmail.com">ladri.lapri.asces@gmail.com</a></span>
   </footer>
 </div>
 <div class="tip" id="tip" hidden></div>
