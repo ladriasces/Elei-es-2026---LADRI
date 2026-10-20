@@ -1800,28 +1800,31 @@ function statusPaises() {
 function exteriorVivo(X) {
   const pz = DADOS.t2 ? 100 : pstUF("zz") || 0;
   const codsExt = BASE.ext.map(c => c[0]), concluidas = DADOS.t2 ? codsExt.length : codsExt.filter(c => VIVO.finais.has(c)).length;
-  const aviso = `<div class="aviso-vivo">Os resultados do exterior aparecem aqui assim que as primeiras seções forem totalizadas.</div>`;
-  if (!X || !X.ZZ || !X.ZZ.validos) {
-    kpis("#vivo-ext-kpis", [{ l: "Seções apuradas no exterior", v: fmtP(pz, pz === 100 || pz === 0 ? 0 : 2), d: `${concluidas} de ${codsExt.length} cidades concluídas` }]);
-    $("#vivo-mundo").innerHTML = $("#vivo-continentes").innerHTML = aviso;
-    $("#vivo-leg-mundo").innerHTML = $("#vivo-t-paises").innerHTML = "";
-    return;
-  }
-  const z = X.ZZ, z1 = T1.ZZ;
-  kpis("#vivo-ext-kpis", [
-    { l: "Seções apuradas no exterior", v: fmtP(pz, pz === 100 ? 0 : 2), d: `${concluidas} de ${codsExt.length} cidades concluídas` },
-    { l: "Lula no exterior", v: fmtP(z.p_lula), d: `1º turno: ${fmtP(z1.p_lula)}`, cor: "var(--lula)" },
-    { l: "Flávio no exterior", v: fmtP(z.p_flavio), d: `1º turno: ${fmtP(z1.p_flavio)}`, cor: "var(--flavio)" },
-    { l: "Abstenção no exterior", v: fmtP(z.p_abstencao), d: `1º turno: ${fmtP(z1.p_abstencao)} · nas seções apuradas`, cor: "var(--abst)" },
-  ]);
+  const temDados = !!(X && X.ZZ && X.ZZ.validos);
   const st = statusPaises();
-  // Tamanho das bolhas pelo total de aptos (1º turno), para não "crescerem" durante a apuração
-  const aptos = new Map(T1.PAISES.map(p => [p.iso3, p.eleitores]));
-  const paises = X.PAISES.map(p => ({ ...p, eleitores: aptos.get(p.iso3) || p.eleitores, margem: p.validos > 0 ? p.margem : null }));
+  if (!temDados) {
+    kpis("#vivo-ext-kpis", [{ l: "Seções apuradas no exterior", v: fmtP(pz, pz === 100 || pz === 0 ? 0 : 2), d: `${concluidas} de ${codsExt.length} cidades concluídas` }]);
+    $("#vivo-continentes").innerHTML = `<div class="aviso-vivo">Aparece quando os primeiros votos do exterior forem totalizados.</div>`;
+  } else {
+    const z = X.ZZ, z1 = T1.ZZ;
+    kpis("#vivo-ext-kpis", [
+      { l: "Seções apuradas no exterior", v: fmtP(pz, pz === 100 ? 0 : 2), d: `${concluidas} de ${codsExt.length} cidades concluídas` },
+      { l: "Lula no exterior", v: fmtP(z.p_lula), d: `1º turno: ${fmtP(z1.p_lula)}`, cor: "var(--lula)" },
+      { l: "Flávio no exterior", v: fmtP(z.p_flavio), d: `1º turno: ${fmtP(z1.p_flavio)}`, cor: "var(--flavio)" },
+      { l: "Abstenção no exterior", v: fmtP(z.p_abstencao), d: `1º turno: ${fmtP(z1.p_abstencao)} · nas seções apuradas`, cor: "var(--abst)" },
+    ]);
+    continentes("#vivo-continentes", X.PAISES.filter(p => p.validos > 0));
+  }
+  // Mapa-múndi sempre visível: todos os países começam em cinza e ganham cor conforme apuram.
+  // Tamanho das bolhas pelo total de aptos (1º turno), para não "crescerem" durante a apuração.
+  const p2 = new Map(temDados ? X.PAISES.map(p => [p.iso3, p]) : []);
+  const paises = T1.PAISES.map(p1 => {
+    const q = p2.get(p1.iso3);
+    return q && q.validos > 0 ? { ...q, eleitores: p1.eleitores, lonlat: p1.lonlat }
+      : { ...p1, p_flavio: null, p_lula: null, p_abstencao: null, comparecimento: 0, margem: null };
+  });
   mapaMundo({ alvo: "#vivo-mundo", leg: "#vivo-leg-mundo", paises, ind: "margem",
-    opacidade: d => { const s = st.get(d.iso3); return s && s.p > 0 && s.p < 100 ? .45 : .9; } });
-  continentes("#vivo-continentes", X.PAISES.filter(p => p.validos > 0));
-  const p2 = new Map(X.PAISES.map(p => [p.iso3, p]));
+    opacidade: d => { const x = st.get(d.iso3); return x && x.p > 0 && x.p < 100 ? .45 : .9; } });
   const linhas = T1.PAISES.slice(0, 15).map(p1 => ({ p1, p2: p2.get(p1.iso3), s: st.get(p1.iso3) }));
   $("#vivo-t-paises").innerHTML = `<table><thead><tr><th>País</th><th>Aptos</th><th>Apuração</th><th>Flávio</th><th>Lula</th><th></th><th>Lula no 1º turno</th></tr></thead><tbody>${linhas.map(({ p1, p2: q, s }) => {
     const tem = q && q.validos > 0, ap = !s || s.p === 0 ? "sem dados" : s.p >= 100 ? "concluída" : fmtP(s.p, 0);
