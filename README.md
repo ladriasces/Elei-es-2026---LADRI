@@ -1,10 +1,12 @@
-# Eleições 2026 · 1º turno presidencial
+# Eleições 2026 · Eleição presidencial (1º e 2º turnos)
 
 **LADRI — Laboratório de Dados e Relações Internacionais · ASCES-UNITA**
 
-Análise descritiva e georreferenciada do 1º turno da eleição presidencial de 4 de outubro de 2026, com dados oficiais do Tribunal Superior Eleitoral (TSE).
+Análise descritiva e georreferenciada da eleição presidencial de 2026 — 1º turno (4 de outubro) e 2º turno (25 de outubro), com acompanhamento da apuração ao vivo — com dados oficiais do Tribunal Superior Eleitoral (TSE).
 
 🔗 **Painel interativo:** https://ladriasces.github.io/Elei-es-2026---LADRI/
+
+**1º turno**
 
 | | Flávio Bolsonaro (PL) | Lula (PT) |
 |---|---|---|
@@ -16,7 +18,7 @@ Nenhum candidato alcançou mais de 50% dos votos válidos; os dois disputam o 2�
 
 ## O que tem aqui
 
-- **Painel interativo** ([`docs/index.html`](docs/index.html)): visão geral, mapa por município, análise por região, análise por estado (com mesorregiões), abstenção (com comparação com 2022), brasileiros no exterior e comparação com 2022.
+- **Painel interativo** ([`docs/index.html`](docs/index.html)): visão geral, **2º turno ao vivo**, mapa por município, análise por região, análise por estado (com mesorregiões), abstenção (com comparação com 2022), brasileiros no exterior e comparação com 2022. Um seletor "1º turno | 2º turno" no topo faz todas as abas mostrarem o turno escolhido.
 - **Notebook didático** ([`analise_eleicoes_2026.ipynb`](analise_eleicoes_2026.ipynb)): como usar a API do TSE, estatística descritiva, mapas com geopandas, exterior e 2022.
 - **Tabelas tratadas** ([`data/processed/`](data/processed/)): resultados por candidato, UF, município e país, prontos para análise.
 
@@ -29,14 +31,33 @@ python 02_tratamento.py      # monta as tabelas em data/processed/
 python 03_painel.py          # gera o painel (painel/index.html e docs/index.html)
 ```
 
+Para o 2º turno, use `--turno 2` na coleta e no tratamento (as saídas vão para `data/raw/tse_2t/` e `data/processed/2t/`).
+
+## 2º turno ao vivo
+
+Durante a apuração, a aba **2º turno ao vivo** lê a API do TSE diretamente no navegador de quem acessa o site, a cada minuto: placar, % de seções apuradas, andamento por estado, mapa por estado e por município (que vai se completando), curva da apuração e a comparação com o 1º turno. Nada precisa ficar ligado no servidor do LADRI. Os números são oficiais e parciais; a plataforma não faz projeções.
+
+O motor ao vivo (em `painel/template.html`) reproduz em JavaScript as mesmas regras do tratamento em Python (`tse_comum.py`). Num teste com a apuração completa simulada, os 115.300 valores montados no navegador (candidatos, resumo, estados, municípios, países e cidades no exterior) foram idênticos aos gerados pelo pipeline.
+
+Depois da totalização final, os dados do 2º turno são gravados no próprio painel, que deixa de depender da API:
+
+```bash
+python 01_coleta.py --turno 2 --atualizar
+python 02_tratamento.py --turno 2
+python 03_painel.py
+git add -A && git commit -m "2º turno: resultado final" && git push
+```
+
+O `03_painel.py` só embute o 2º turno quando o TSE marca a totalização como final. A versão do painel publicada no claude.ai não consegue acessar a API do TSE (restrição de segurança da plataforma); o acompanhamento ao vivo funciona no site do GitHub Pages.
+
 Os dados brutos (~690 MB, incluindo o arquivo de 2022 do [Portal de Dados Abertos do TSE](https://dadosabertos.tse.jus.br/)) não ficam no repositório por causa do tamanho; o `01_coleta.py` baixa tudo.
 
 Para só explorar os dados, não é preciso rodar a coleta: o notebook usa as tabelas de `data/processed/` e baixa sozinho os poucos arquivos brutos de que precisa.
 
 ## Fontes
 
-- **Resultados 2026:** API pública de divulgação de resultados do TSE (`resultados.tse.jus.br`), eleição 6257, cargo Presidente. Um arquivo por município (5.571) e por cidade no exterior (186).
-- **Resultados 2022:** Portal de Dados Abertos do TSE, `votacao_candidato_munzona_2022` (votos) e `detalhe_votacao_munzona_2022` (comparecimento e abstenção), 1º turno, Presidente.
+- **Resultados 2026:** API pública de divulgação de resultados do TSE (`resultados.tse.jus.br`), eleições 6257 (1º turno) e 6258 (2º turno), cargo Presidente. Um arquivo por município (5.571) e por cidade no exterior (186).
+- **Resultados 2022:** Portal de Dados Abertos do TSE, `votacao_candidato_munzona_2022` (votos) e `detalhe_votacao_munzona_2022` (comparecimento e abstenção), 1º e 2º turnos, Presidente. Cada turno de 2026 é comparado com o mesmo turno de 2022.
 - **Malhas e divisão regional:** API de malhas e de localidades do IBGE.
 - **Mapa-múndi:** Natural Earth (1:110 milhões).
 
@@ -55,6 +76,7 @@ Esta plataforma foi desenvolvida pelo LADRI com o auxílio do **Claude**, assist
 ## Estrutura
 
 ```
+tse_comum.py               funções e constantes comuns (leitura do TSE, 2022, pastas por turno)
 01_coleta.py               coleta (TSE + IBGE)
 02_tratamento.py           tratamento e junções
 03_painel.py               gera o painel a partir de painel/template.html

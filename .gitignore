@@ -21,3 +21,6 @@ data/fontes/
 .idea/
 Thumbs.db
 desktop.ini
+
+# Simulador da apuração (somente testes locais)
+simulador_2t.py

@@ -178,6 +178,29 @@ select { font: 500 .9rem var(--f-body); padding: 7px 10px; border: 1px solid var
 .repo-url { grid-column: 1 / -1; justify-self: start; overflow-wrap: anywhere; }
 @media (max-width: 640px) { .repo { grid-template-columns: minmax(0, 1fr); } .btn-repo { justify-self: start; } }
 
+/* Seletor de turno, faixa de dados parciais e aba ao vivo */
+.turno-box { display: grid; gap: 6px; justify-items: end; }
+#ctl-turno button { font-weight: 600; padding: 6px 14px; }
+#ctl-turno button[disabled] { opacity: .45; cursor: not-allowed; }
+.faixa { margin-top: 10px; padding: 8px 12px; border-radius: 8px; background: color-mix(in srgb, var(--caiado) 16%, var(--surface)); border: 1px solid color-mix(in srgb, var(--caiado) 45%, var(--line)); font-size: .86rem; }
+.ponto-vivo { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--lula); margin-right: 6px; vertical-align: 1px; }
+.ponto-vivo.ativo { animation: pulso 1.6s ease-in-out infinite; }
+@keyframes pulso { 0%, 100% { opacity: 1; } 50% { opacity: .25; } }
+@media (prefers-reduced-motion: reduce) { .ponto-vivo.ativo { animation: none; } }
+.vivo-status { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; font-size: .9rem; }
+.vivo-status .estado { font-family: var(--f-display); font-weight: 750; font-stretch: 85%; font-size: 1.15rem; }
+.vivo-status .muted { font-size: .8rem; }
+.selo { display: inline-flex; align-items: center; padding: 3px 10px; border-radius: 999px; font-size: .75rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; }
+.selo.aguardando { background: var(--bg); color: var(--ink-2); border: 1px solid var(--line-strong); }
+.selo.apurando { background: color-mix(in srgb, var(--lula) 18%, transparent); color: var(--ink); }
+.selo.encerrada { background: var(--accent-soft); color: var(--ink); }
+.selo.erro { background: color-mix(in srgb, var(--caiado) 22%, transparent); color: var(--ink); }
+.progresso { height: 8px; border-radius: 4px; background: var(--bg); overflow: hidden; }
+.progresso > div { height: 100%; background: var(--accent); }
+.andamento { display: grid; gap: 4px; font-size: .8rem; max-height: 640px; overflow: auto; }
+.andamento .linha-barra { grid-template-columns: 130px 1fr 54px; }
+.aviso-vivo { padding: 18px; border: 1px dashed var(--line-strong); border-radius: 10px; color: var(--ink-2); text-align: center; }
+
 /* Tabelas */
 .tabela-wrap { overflow-x: auto; }
 table { border-collapse: collapse; width: 100%; font-size: .84rem; }
@@ -209,9 +232,14 @@ footer { margin-top: 36px; padding-top: 16px; border-top: 1px solid var(--line);
     <div class="titulo">
       <div>
         <div class="eyebrow">LADRI · Laboratório de Dados e Relações Internacionais · ASCES-UNITA</div>
-        <h1>Eleições 2026 · 1º turno presidencial</h1>
+        <h1>Eleições 2026 · <span id="h1-turno">1º turno</span> presidencial</h1>
       </div>
-      <div class="fonte" id="fonte-data"></div>
+      <div class="turno-box">
+        <div class="seg" id="ctl-turno" role="group" aria-label="Turno exibido nas abas">
+          <button data-v="1" aria-pressed="true">1º turno</button><button data-v="2" aria-pressed="false" disabled title="Disponível quando a apuração do 2º turno começar">2º turno</button>
+        </div>
+        <div class="fonte" id="fonte-data"></div>
+      </div>
     </div>
     <div class="placar" id="placar"></div>
   </header>
@@ -219,6 +247,7 @@ footer { margin-top: 36px; padding-top: 16px; border-top: 1px solid var(--line);
   <nav class="abas" aria-label="Seções">
     <div class="lista" role="tablist">
       <button role="tab" data-aba="geral" aria-selected="true">Visão geral</button>
+      <button role="tab" data-aba="aovivo" aria-selected="false"><span class="ponto-vivo" id="ponto-vivo"></span>2º turno ao vivo</button>
       <button role="tab" data-aba="mapa" aria-selected="false">Mapa do Brasil</button>
       <button role="tab" data-aba="regiao" aria-selected="false">Por região</button>
       <button role="tab" data-aba="estado" aria-selected="false">Por estado</button>
@@ -227,6 +256,7 @@ footer { margin-top: 36px; padding-top: 16px; border-top: 1px solid var(--line);
       <button role="tab" data-aba="comparar" aria-selected="false">2022 × 2026</button>
       <button role="tab" data-aba="sobre" aria-selected="false">Dados e método</button>
     </div>
+    <div class="faixa" id="faixa-parcial" hidden></div>
   </nav>
 
   <!-- VISÃO GERAL -->
@@ -236,16 +266,75 @@ footer { margin-top: 36px; padding-top: 16px; border-top: 1px solid var(--line);
       <div class="cartao c6">
         <h3>Votos válidos por candidato</h3>
         <div class="grafico" id="g-candidatos"></div>
-        <p class="nota">Percentual sobre os votos válidos (exclui brancos e nulos), critério usado pelo TSE para definir o 2º turno.</p>
+        <p class="nota" id="nota-candidatos">Percentual sobre os votos válidos (exclui brancos e nulos), critério usado pelo TSE para definir o 2º turno.</p>
       </div>
       <div class="cartao c6">
         <h3>Resultado por região</h3>
         <div class="grafico" id="g-regioes"></div>
-        <p class="nota">Nordeste e Sul são polos opostos: a diferença entre as duas regiões passa de 60 pontos percentuais.</p>
+        <p class="nota" id="nota-regioes"></p>
       </div>
       <div class="cartao c12">
         <h3>Margem por estado <span class="muted" style="font-weight:500">· Flávio − Lula, em pontos percentuais</span></h3>
         <div class="grafico" id="g-margem-uf"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 2º TURNO AO VIVO -->
+  <section class="aba" id="aba-aovivo" hidden>
+    <div class="cartao">
+      <div class="vivo-status" id="vivo-status"></div>
+      <div class="progresso" aria-hidden="true"><div id="vivo-progresso" style="width:0%"></div></div>
+    </div>
+    <div class="placar" id="vivo-placar"></div>
+    <div class="kpis" id="vivo-kpis"></div>
+    <div class="grade">
+      <div class="cartao c8">
+        <div class="controles">
+          <div><span class="ctl-label">Nível</span>
+            <div class="seg" id="ctl-vivo-nivel"><button data-v="mun" aria-pressed="true">Municípios</button><button data-v="uf" aria-pressed="false">Estados</button></div></div>
+          <div><span class="ctl-label">Indicador</span>
+            <div class="seg" id="ctl-vivo-ind"><button data-v="margem" aria-pressed="true">Margem</button><button data-v="venc" aria-pressed="false">Vencedor</button></div></div>
+        </div>
+        <div class="mapa" id="vivo-mapa"></div>
+        <div class="legenda" id="vivo-leg"></div>
+        <p class="nota">Cor cheia: apuração concluída no local. Cor clara: apuração parcial. Cinza: ainda sem dados.</p>
+      </div>
+      <div class="cartao c4">
+        <h3>Andamento por estado</h3>
+        <p class="nota">% das seções eleitorais já totalizadas.</p>
+        <div class="andamento" id="vivo-andamento"></div>
+      </div>
+      <div class="cartao c12">
+        <h3>Curva da apuração</h3>
+        <div class="grafico" id="vivo-curva"></div>
+        <p class="nota" id="vivo-curva-nota">Cada ponto é uma leitura da API do TSE: % dos votos válidos de cada candidato conforme as seções são apuradas. A curva começa no momento em que esta página foi aberta.</p>
+      </div>
+    </div>
+    <div class="cab">
+      <h2>Do 1º para o 2º turno</h2>
+      <p class="lede">Como os votos se moveram entre 4 e 25 de outubro. Enquanto a apuração não termina, as comparações usam só os locais já apurados.</p>
+    </div>
+    <div class="kpis" id="vivo-comp-kpis"></div>
+    <div class="grade">
+      <div class="cartao c6">
+        <h3>Lula: variação do 1º para o 2º turno</h3>
+        <div class="mapa" id="vivo-mapa-lula"></div>
+        <div class="legenda" id="vivo-leg-lula"></div>
+      </div>
+      <div class="cartao c6">
+        <h3>Flávio Bolsonaro: variação do 1º para o 2º turno</h3>
+        <div class="mapa" id="vivo-mapa-flavio"></div>
+        <div class="legenda" id="vivo-leg-flavio"></div>
+      </div>
+      <div class="cartao c7">
+        <h3>Quem cresceu onde havia mais votos em terceiros?</h3>
+        <div class="grafico" id="vivo-terceiros"></div>
+        <p class="nota" id="vivo-terceiros-nota"></p>
+      </div>
+      <div class="cartao c5">
+        <h3>Abstenção por estado: 1º × 2º turno</h3>
+        <div class="grafico" id="vivo-abst"></div>
       </div>
     </div>
   </section>
@@ -387,7 +476,7 @@ footer { margin-top: 36px; padding-top: 16px; border-top: 1px solid var(--line);
         <h3>Como ler a abstenção</h3>
         <p>Abstenção é o percentual de eleitores aptos que não compareceram para votar. Parte dela é técnica: eleitores que morreram ou mudaram de cidade e continuam no cadastro aparecem como ausentes, o que eleva o número onde o cadastro está mais desatualizado.</p>
         <p>No exterior, quem não vota pode justificar a ausência pela internet, e o cadastro costuma manter eleitores que já voltaram ao Brasil. Por isso a abstenção fora do país é muito mais alta.</p>
-        <p class="muted">A comparação com 2022 usa o 1º turno presidencial daquele ano.</p>
+        <p class="muted" id="nota-abst-turno">A comparação com 2022 usa o 1º turno presidencial daquele ano.</p>
       </div>
     </div>
   </section>
@@ -471,7 +560,7 @@ footer { margin-top: 36px; padding-top: 16px; border-top: 1px solid var(--line);
   <section class="aba" id="aba-comparar" hidden>
     <div class="cab">
       <h2>O que mudou desde 2022</h2>
-      <p class="lede">Em 2022, o 1º turno também opôs Lula e o campo bolsonarista, com Jair Bolsonaro como candidato. Em 2026, o candidato do PL é Flávio Bolsonaro. A comparação abaixo usa o percentual de votos válidos de cada ano; como os candidatos do campo bolsonarista são diferentes, leia a variação do PL como mudança do campo político, não de uma mesma pessoa.</p>
+      <p class="lede" id="comp-lede">Em 2022, o 1º turno também opôs Lula e o campo bolsonarista, com Jair Bolsonaro como candidato. Em 2026, o candidato do PL é Flávio Bolsonaro. A comparação abaixo usa o percentual de votos válidos de cada ano; como os candidatos do campo bolsonarista são diferentes, leia a variação do PL como mudança do campo político, não de uma mesma pessoa.</p>
     </div>
     <div class="kpis" id="kpis-comp"></div>
     <div class="grade">
@@ -510,8 +599,9 @@ footer { margin-top: 36px; padding-top: 16px; border-top: 1px solid var(--line);
       <div class="cartao c12 texto">
         <h2>De onde vêm os dados</h2>
         <ul>
-          <li><b>Resultados 2026:</b> API pública de divulgação do TSE (<code>resultados.tse.jus.br</code>), eleição 6257, cargo Presidente. Um arquivo JSON por município (5.571) e por cidade no exterior (186), totalizados.</li>
-          <li><b>Resultados 2022:</b> Portal de Dados Abertos do TSE, arquivos <code>votacao_candidato_munzona_2022</code> (votos) e <code>detalhe_votacao_munzona_2022</code> (comparecimento e abstenção), 1º turno, cargo Presidente.</li>
+          <li><b>Resultados 2026:</b> API pública de divulgação do TSE (<code>resultados.tse.jus.br</code>), eleições 6257 (1º turno) e 6258 (2º turno), cargo Presidente. Um arquivo JSON por município (5.571) e por cidade no exterior (186).</li>
+          <li><b>2º turno ao vivo:</b> durante a apuração, o painel lê a API do TSE diretamente no navegador, a cada minuto. Os números são oficiais, mas parciais até a totalização final; a plataforma não faz projeções. Depois da totalização, os dados finais são gravados no próprio painel.</li>
+          <li><b>Resultados 2022:</b> Portal de Dados Abertos do TSE, arquivos <code>votacao_candidato_munzona_2022</code> (votos) e <code>detalhe_votacao_munzona_2022</code> (comparecimento e abstenção), 1º e 2º turnos, cargo Presidente. Cada turno de 2026 é comparado com o mesmo turno de 2022.</li>
           <li><b>Malhas territoriais:</b> API de malhas do IBGE (estados e municípios); divisão regional (mesorregiões e regiões imediatas) pela API de localidades do IBGE.</li>
           <li><b>Mapa-múndi:</b> Natural Earth (escala 1:110 milhões).</li>
         </ul>
@@ -538,7 +628,9 @@ footer { margin-top: 36px; padding-top: 16px; border-top: 1px solid var(--line);
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
 <script>
-const D = /*__DADOS__*/null;
+const DADOS = /*__DADOS__*/null;
+const G = DADOS.geo;
+const REGIOES = ["Norte", "Nordeste", "Centro-Oeste", "Sudeste", "Sul"];
 
 /* ---------- utilidades ---------- */
 const fmtInt = new Intl.NumberFormat("pt-BR");
@@ -554,18 +646,34 @@ const COR_CAND = { "22": "--flavio", "13": "--lula", "70": "--cury", "14": "--re
 const corCand = n => css(COR_CAND[n] || "--outros");
 const NOMES = { "22": "Flávio Bolsonaro", "13": "Lula" };
 
-const MUN = D.mun.map(r => Object.fromEntries(D.mun_cols.map((c, i) => [c, r[i]])));
-MUN.forEach(m => { m.margem = m.p_flavio - m.p_lula; m.d_lula = m.p_lula22 == null ? null : m.p_lula - m.p_lula22; m.d_bols = m.p_bolsonaro22 == null ? null : m.p_flavio - m.p_bolsonaro22; });
-const MUN_IDX = new Map(MUN.map(m => [m.ibge, m]));
-const UFS = D.ufs.filter(u => u.uf !== "ZZ");
-UFS.forEach(u => { u.margem = u.p_flavio - u.p_lula; u.d_lula = u.p_lula - u.p_lula22; u.d_bols = u.p_flavio - u.p_bolsonaro22; });
-const UF_IDX = new Map(UFS.map(u => [u.uf, u]));
-MUN.forEach(m => { m.regiao = (UF_IDX.get(m.uf) || {}).regiao; m.d_abst = m.p_abstencao22 == null ? null : m.p_abstencao - m.p_abstencao22; });
-UFS.forEach(u => { u.d_abst = u.p_abstencao - u.p_abstencao22; });
-const ZZ = D.ufs.find(u => u.uf === "ZZ");
-const R = D.resumo;
-// Abstenção só no território nacional (sem o exterior), para comparar com estados e com o exterior
-const ABST_BR = 100 * (1 - d3.sum(UFS, u => u.comparecimento) / d3.sum(UFS, u => u.eleitores));
+// Diferença entre dois percentuais (null se faltar algum)
+const dif = (a, b) => a == null || b == null ? null : a - b;
+// Deriva, de um turno (formato montado pelo 03_painel.py ou pelo motor ao vivo), as estruturas usadas pelas abas
+function derivar(dados) {
+  const X = { D: dados };
+  X.MUN = dados.mun.map(r => Object.fromEntries(dados.mun_cols.map((c, i) => [c, r[i]])));
+  X.MUN.forEach(m => { m.margem = dif(m.p_flavio, m.p_lula); m.d_lula = dif(m.p_lula, m.p_lula22); m.d_bols = dif(m.p_flavio, m.p_bolsonaro22); });
+  X.MUN_IDX = new Map(X.MUN.map(m => [m.ibge, m]));
+  X.UFS = dados.ufs.filter(u => u.uf !== "ZZ");
+  X.UFS.forEach(u => { u.margem = dif(u.p_flavio, u.p_lula); u.d_lula = dif(u.p_lula, u.p_lula22); u.d_bols = dif(u.p_flavio, u.p_bolsonaro22); u.d_abst = dif(u.p_abstencao, u.p_abstencao22); });
+  X.UF_IDX = new Map(X.UFS.map(u => [u.uf, u]));
+  X.MUN.forEach(m => { m.regiao = (X.UF_IDX.get(m.uf) || {}).regiao; m.d_abst = dif(m.p_abstencao, m.p_abstencao22); });
+  X.ZZ = dados.ufs.find(u => u.uf === "ZZ");
+  X.R = dados.resumo;
+  // Abstenção só no território nacional (sem o exterior), para comparar com estados e com o exterior
+  const elBR = d3.sum(X.UFS, u => u.eleitores);
+  X.ABST_BR = elBR ? 100 * (1 - d3.sum(X.UFS, u => u.comparecimento) / elBR) : null;
+  X.AGG_REG = new Map(REGIOES.map(r => [r, agregarUFs(X.UFS.filter(u => u.regiao === r))]));
+  X.AGG_BR = agregarUFs(X.UFS);
+  X.PAISES = dados.paises.map(p => ({ ...p, margem: dif(p.p_flavio, p.p_lula) }));
+  return X;
+}
+let TURNO = 1, D, MUN, MUN_IDX, UFS, UF_IDX, ZZ, R, ABST_BR, AGG_REG, AGG_BR, PAISES;
+function prepararTurno(dados) {
+  ({ D, MUN, MUN_IDX, UFS, UF_IDX, ZZ, R, ABST_BR, AGG_REG, AGG_BR, PAISES } = derivar(dados));
+}
+const T1 = derivar(DADOS.t1);   // 1º turno fixo, para as comparações entre turnos
+prepararTurno(DADOS.t1);
 
 /* ---------- escalas de cor ---------- */
 function rampa(hex, neutro) { return t => d3.interpolateLab(neutro, hex)(t); }
@@ -581,6 +689,10 @@ function escala(ind) {
   if (ind === "d_abst") {
     const s = d3.scaleDiverging([-8, 0, 8], t => t < .5 ? d3.interpolateLab(css("--menos"), mid)(t * 2) : d3.interpolateLab(mid, css("--abst"))((t - .5) * 2)).clamp(true);
     return { cor: s, dom: [-8, 8], ticks: ["−8 p.p. (caiu)", "0", "+8 p.p. (subiu)"], fmt: fmtPP, rot: "Variação da abstenção, 2022 → 2026" };
+  }
+  if (ind === "d_turno") {
+    const s = d3.scaleDiverging([-25, 0, 25], t => t < .5 ? d3.interpolateLab(css("--down"), mid)(t * 2) : d3.interpolateLab(mid, css("--up"))((t - .5) * 2)).clamp(true);
+    return { cor: s, dom: [-25, 25], ticks: ["−25 p.p.", "0", "+25 p.p."], fmt: fmtPP };
   }
   if (ind === "d_lula" || ind === "d_bols") {
     const s = d3.scaleDiverging([-15, 0, 15], t => t < .5 ? d3.interpolateLab(css("--down"), mid)(t * 2) : d3.interpolateLab(mid, css("--up"))((t - .5) * 2)).clamp(true);
@@ -627,22 +739,37 @@ function tipLocal(o, nome, sub) {
 }
 
 /* ---------- placar ---------- */
-function placar() {
-  const f = D.candidatos.find(c => c.n === "22"), l = D.candidatos.find(c => c.n === "13");
-  const outros = 100 - f.pct - l.pct;
-  $("#placar").innerHTML = `
+const pstNum = v => v == null || v === "" ? 0 : +String(v).replace(",", ".");
+function placarHTML(f, l, meio, extra) {
+  const outros = Math.max(0, 100 - f.pct - l.pct);
+  return `
     <div class="placar-nomes">
       <div class="cand-hero"><span class="pct num" style="color:var(--flavio)">${fmtP(f.pct, 2)}</span><span class="nm">Flávio Bolsonaro <span class="muted">· PL</span></span><span class="sub num">${fmtInt.format(f.votos)} votos</span></div>
-      <div class="meio"><strong>2º turno em 25 de outubro</strong>Ninguém passou de 50% dos votos válidos</div>
+      <div class="meio">${meio}</div>
       <div class="cand-hero dir"><span class="pct num" style="color:var(--lula)">${fmtP(l.pct, 2)}</span><span class="nm">Lula <span class="muted">· PT</span></span><span class="sub num">${fmtInt.format(l.votos)} votos</span></div>
     </div>
     <div class="cabo" role="img" aria-label="Divisão dos votos válidos: Flávio ${fmtP(f.pct)}, outros ${fmtP(outros)}, Lula ${fmtP(l.pct)}">
       <div style="width:${f.pct}%;background:var(--flavio)"></div><div style="width:${outros}%;background:var(--outros)"></div><div style="width:${l.pct}%;background:var(--lula)"></div>
     </div>
-    <div class="cabo-legenda num"><span>Diferença: ${fmtInt.format(f.votos - l.votos)} votos (${fmtPP(f.pct - l.pct, 2)})</span><span>Demais candidatos: ${fmtP(outros)}</span></div>`;
-  const fonte = `Fonte: TSE, totalização de ${"05/10/2026"} (100% das seções apuradas).`;
-  $("#fonte-data").textContent = "Apuração 100% · votação em 4 de outubro de 2026";
-  $("#rodape-fonte").textContent = fonte;
+    <div class="cabo-legenda num"><span>Diferença: ${fmtInt.format(Math.abs(f.votos - l.votos))} votos (${fmtPP(f.pct - l.pct, 2)})</span><span>${extra}</span></div>`;
+}
+function meioPlacar(dados) {
+  const f = dados.candidatos.find(c => c.n === "22"), l = dados.candidatos.find(c => c.n === "13");
+  const st = dados.status || {}, pst = pstNum(st.pst);
+  if (dados.turno === 1) return `<strong>2º turno em 25 de outubro</strong>Ninguém passou de 50% dos votos válidos`;
+  if (st.final) { const [nome, c] = f.votos > l.votos ? ["Flávio Bolsonaro", f] : ["Lula", l]; return `<strong>${nome} é eleito presidente</strong>com ${fmtP(c.pct, 2)} dos votos válidos`; }
+  return `<strong>Apuração em andamento</strong>${fmtP(pst, 2)} das seções apuradas`;
+}
+function placar() {
+  const f = D.candidatos.find(c => c.n === "22"), l = D.candidatos.find(c => c.n === "13");
+  const outros = Math.max(0, 100 - f.pct - l.pct);
+  const st = D.status || {}, pst = pstNum(st.pst);
+  $("#placar").innerHTML = placarHTML(f, l, meioPlacar(D), TURNO === 1 ? `Demais candidatos: ${fmtP(outros)}` : `Brancos e nulos: ${fmtP(+R.p_brancos_nulos)} dos votos`);
+  const dataTot = (st.totalizado || st.gerado || "").split(" ")[0];
+  const pstTxt = fmtP(pst, pst === 100 ? 0 : 2);
+  $("#rodape-fonte").textContent = `Fonte: TSE, totalização de ${dataTot} (${pstTxt} das seções apuradas).`;
+  $("#fonte-data").textContent = `Apuração ${pstTxt} · votação em ${TURNO === 1 ? "4" : "25"} de outubro de 2026`;
+  $("#h1-turno").textContent = `${TURNO}º turno`;
 }
 
 function kpis(alvo, itens) {
@@ -689,15 +816,14 @@ function barrasEmpilhadas(alvo, linhas, opts = {}) {
   ax.select(".domain").remove();
   if (opts.legenda !== false) {
     const leg = el("div", { className: "legenda" });
-    leg.innerHTML = `<div class="chips"><span class="chip"><i style="background:var(--flavio)"></i>Flávio</span><span class="chip"><i style="background:var(--outros)"></i>Outros</span><span class="chip"><i style="background:var(--lula)"></i>Lula</span></div>`;
+    leg.innerHTML = `<div class="chips"><span class="chip"><i style="background:var(--flavio)"></i>Flávio</span>${TURNO === 1 ? `<span class="chip"><i style="background:var(--outros)"></i>Outros</span>` : ""}<span class="chip"><i style="background:var(--lula)"></i>Lula</span></div>`;
     box.prepend(leg);
   }
 }
-const partesFL = o => [
-  { v: o.p_flavio, cor: css("--flavio") },
-  { v: Math.max(0, 100 - o.p_flavio - o.p_lula), cor: css("--outros") },
-  { v: o.p_lula, cor: css("--lula") },
-];
+const partesFL = o => {
+  const f = o.p_flavio || 0, l = o.p_lula || 0;
+  return [{ v: f, cor: css("--flavio") }, { v: f + l ? Math.max(0, 100 - f - l) : 0, cor: css("--outros") }, { v: l, cor: css("--lula") }];
+};
 
 function regioes() {
   const ord = ["Sul", "Centro-Oeste", "Sudeste", "Norte", "Nordeste"];
@@ -710,10 +836,10 @@ function regioes() {
 
 function margemUF() {
   const box = $("#g-margem-uf"); box.innerHTML = "";
-  const dados = [...UFS].sort((a, b) => a.margem - b.margem);
+  const dados = UFS.filter(u => u.margem != null).sort((a, b) => a.margem - b.margem);
   const W = 1160, H = 250, mt = 16, mb = 46, ml = 40;
   const x = d3.scaleBand(dados.map(d => d.uf), [ml, W]).padding(.22);
-  const ext = d3.max(dados, d => Math.abs(d.margem));
+  const ext = d3.max(dados, d => Math.abs(d.margem)) || 10;
   const y = d3.scaleLinear([-ext, ext], [H - mb, mt]).nice();
   const svg = d3.select(box).append("svg").attr("viewBox", `0 0 ${W} ${H}`).attr("role", "img").attr("aria-label", "Margem Flávio menos Lula por estado");
   svg.append("g").attr("class", "grid").selectAll("line").data(y.ticks(6)).join("line").attr("x1", ml).attr("x2", W).attr("y1", y).attr("y2", y);
@@ -753,7 +879,7 @@ function desenhaMapa(alvo, geo, { W = 900, H = 820, autoH = false, getObj, cor, 
 
 /* ---------- aba Mapa do Brasil ---------- */
 const estadoMapa = { ind: "margem", sel: null };
-const UF_GEO_MERGE = { type: "FeatureCollection", features: D.geo.uf.features };
+const UF_GEO_MERGE = { type: "FeatureCollection", features: G.uf.features };
 function detalheBR(o, alvo = "#det-br") {
   const isMun = !!o.ibge;
   const nome = isMun ? o.nome : o.nome;
@@ -765,13 +891,13 @@ function detalheBR(o, alvo = "#det-br") {
   $(alvo).innerHTML = `
     <div class="eyebrow">${o.rotulo || (isMun ? "Município" : "Estado")}</div>
     <div class="nome">${nome}</div><div class="muted">${sub}</div>
-    <div class="linhas">${partes.map(([n, v, c]) => `<div class="linha-barra"><span>${n}</span><div class="trilho"><div style="width:${v}%;background:var(${c})"></div></div><span class="p">${fmtP(v)}</span></div>`).join("")}</div>
+    <div class="linhas">${partes.filter(([, v], i) => i < 2 || v > 0).map(([n, v, c]) => `<div class="linha-barra"><span>${n}</span><div class="trilho"><div style="width:${v}%;background:var(${c})"></div></div><span class="p">${fmtP(v)}</span></div>`).join("")}</div>
     <div class="linhas" style="font-size:.84rem">
       <div class="linha-barra"><span>Margem</span><span></span><span class="p">${fmtPP(o.p_flavio - o.p_lula)}</span></div>
       <div class="linha-barra"><span>Abstenção</span><span></span><span class="p">${fmtP(o.p_abstencao)}</span></div>
       <div class="linha-barra"><span>Brancos+nulos</span><span></span><span class="p">${fmtP(o.p_brancos_nulos)}</span></div>
     </div>
-    <div class="muted num">${fmtInt.format(o.eleitores)} eleitores aptos${o.p_lula22 != null ? ` · Lula em 2022: ${fmtP(o.p_lula22)}` : ""}</div>${botao}`;
+    <div class="muted num">${fmtInt.format(o.eleitores)} eleitores aptos${o.p_lula22 != null ? ` · Lula em 2022 (${TURNO}º turno): ${fmtP(o.p_lula22)}` : ""}</div>${botao}`;
   const b = $(alvo).querySelector("[data-ir-uf]");
   if (b) b.addEventListener("click", () => { selecionarUF(b.dataset.irUf, false); abrir("estado"); window.scrollTo({ top: 0 }); });
 }
@@ -782,12 +908,12 @@ function detalheBRPadrao() {
       <div class="linha-barra"><span>Flávio</span><div class="trilho"><div style="width:${100 * R.mun_flavio / (R.mun_flavio + R.mun_lula)}%;background:var(--flavio)"></div></div><span class="p">${fmtInt.format(R.mun_flavio)}</span></div>
       <div class="linha-barra"><span>Lula</span><div class="trilho"><div style="width:${100 * R.mun_lula / (R.mun_flavio + R.mun_lula)}%;background:var(--lula)"></div></div><span class="p">${fmtInt.format(R.mun_lula)}</span></div>
     </div>
-    <p class="nota">Flávio venceu em mais municípios, mas o mapa engana: muitos são pequenos. Lula venceu em municípios grandes do Nordeste e em várias capitais. Clique no mapa para ver um local.</p>`;
+    <p class="nota">${R.mun_flavio >= R.mun_lula ? "Flávio" : "Lula"} venceu em mais municípios, mas o mapa engana: municípios grandes em área costumam ter poucos eleitores. Clique no mapa para ver um local.</p>`;
 }
 function mapaBR() {
   const esc = escala(estadoMapa.ind);
   const ind = estadoMapa.ind;
-  const r = desenhaMapa("#mapa-br", D.geo.mun, {
+  const r = desenhaMapa("#mapa-br", G.mun, {
     getObj: id => MUN_IDX.get(id),
     cor: o => corPor(ind, o, esc),
     tip: o => tipLocal(o, `${o.nome} (${o.uf})`, o.meso || ""),
@@ -800,7 +926,7 @@ function mapaBR() {
 function tabelasBR() {
   const top = [...MUN].sort((a, b) => b.eleitores - a.eleitores).slice(0, 12);
   $("#t-maiores").innerHTML = tabelaMun(top);
-  const grandes = MUN.filter(m => m.eleitores > 10000);
+  const grandes = MUN.filter(m => m.eleitores > 10000 && m.p_lula != null);
   const tf = [...grandes].sort((a, b) => b.p_flavio - a.p_flavio).slice(0, 5);
   const tl = [...grandes].sort((a, b) => b.p_lula - a.p_lula).slice(0, 5);
   $("#t-extremos").innerHTML = tabelaMun(tf, "Mais votaram em Flávio") + tabelaMun(tl, "Mais votaram em Lula");
@@ -842,9 +968,9 @@ function initSeletorUF() {
 function localizador() {
   const box = $("#loc-br"); box.innerHTML = "";
   const W = 300, H = 300;
-  const path = d3.geoPath(d3.geoMercator().fitSize([W, H], D.geo.uf));
+  const path = d3.geoPath(d3.geoMercator().fitSize([W, H], G.uf));
   const svg = d3.select(box).append("svg").attr("viewBox", `0 0 ${W} ${H}`);
-  svg.selectAll("path").data(D.geo.uf.features).join("path").attr("d", path)
+  svg.selectAll("path").data(G.uf.features).join("path").attr("d", path)
     .attr("class", f => f.properties.id === estadoUF.uf ? "ativo" : null)
     .on("mousemove", (ev, f) => { const u = UF_IDX.get(f.properties.id); mostrarTip(ev, `<b>${u.nome}</b><div class="muted">clique para analisar</div>`); })
     .on("mouseleave", esconderTip)
@@ -898,7 +1024,7 @@ function focarMunUF(m) {
 }
 function mapaUF() {
   const uf = estadoUF.uf, esc = escala(estadoUF.ind);
-  const geo = { type: "FeatureCollection", features: D.geo.mun.features.filter(f => f.properties.id !== NORONHA && (MUN_IDX.get(f.properties.id) || {}).uf === uf) };
+  const geo = { type: "FeatureCollection", features: G.mun.features.filter(f => f.properties.id !== NORONHA && (MUN_IDX.get(f.properties.id) || {}).uf === uf) };
   const r = desenhaMapa("#mapa-uf", geo, {
     W: 900, autoH: true,
     getObj: id => MUN_IDX.get(id),
@@ -907,7 +1033,7 @@ function mapaUF() {
     onClick: o => { detalheBR(o, "#det-uf"); tabelaUF(o.ibge); },
   });
   mapaUF.ref = r;
-  if (estadoUF.meso) r.g.selectAll("path.meso").data(D.geo.meso.features.filter(f => f.properties.id.startsWith(uf + "|"))).join("path")
+  if (estadoUF.meso) r.g.selectAll("path.meso").data(G.meso.features.filter(f => f.properties.id.startsWith(uf + "|"))).join("path")
     .attr("class", "contorno meso").attr("d", r.path).style("stroke-opacity", .85).style("stroke-width", 1.4);
   // Rótulos: capital e a maior cidade fora da região imediata da capital
   const ms = MUN.filter(m => m.uf === uf);
@@ -926,23 +1052,21 @@ function mapaUF() {
 // Soma estados (ou municípios) em um único bloco, com percentuais ponderados
 function agregarUFs(lista) {
   const val = d3.sum(lista, u => u.validos), el = d3.sum(lista, u => u.eleitores), comp = d3.sum(lista, u => u.comparecimento);
-  const pond = k => d3.sum(lista, u => u[k] * u.validos) / val;
+  const pond = k => val ? d3.sum(lista, u => (u[k] || 0) * u.validos) / val : null;
   const o = { eleitores: el, comparecimento: comp, validos: val, v_flavio: d3.sum(lista, u => u.v_flavio), v_lula: d3.sum(lista, u => u.v_lula),
     p_flavio: pond("p_flavio"), p_lula: pond("p_lula"), p_cury: pond("p_cury"), p_renan: pond("p_renan"), p_caiado: pond("p_caiado"), p_outros: pond("p_outros"),
-    p_abstencao: 100 * (1 - comp / el), p_brancos_nulos: d3.sum(lista, u => u.p_brancos_nulos * u.comparecimento) / comp,
+    p_abstencao: el ? 100 * (1 - comp / el) : null, p_brancos_nulos: comp ? d3.sum(lista, u => (u.p_brancos_nulos || 0) * u.comparecimento) / comp : null,
     p_lula22: 100 * d3.sum(lista, u => u.v_lula22) / d3.sum(lista, u => u.validos22),
     p_bolsonaro22: 100 * d3.sum(lista, u => u.v_bolsonaro22) / d3.sum(lista, u => u.validos22),
     p_abstencao22: 100 * d3.sum(lista, u => u.abst22) / d3.sum(lista, u => u.aptos22) };
-  o.margem = o.p_flavio - o.p_lula; o.d_lula = o.p_lula - o.p_lula22; o.d_bols = o.p_flavio - o.p_bolsonaro22; o.d_abst = o.p_abstencao - o.p_abstencao22;
+  o.margem = dif(o.p_flavio, o.p_lula); o.d_lula = dif(o.p_lula, o.p_lula22); o.d_bols = dif(o.p_flavio, o.p_bolsonaro22); o.d_abst = dif(o.p_abstencao, o.p_abstencao22);
   return o;
 }
-const REGIOES = ["Norte", "Nordeste", "Centro-Oeste", "Sudeste", "Sul"];
-const AGG_REG = new Map(REGIOES.map(r => [r, agregarUFs(UFS.filter(u => u.regiao === r))]));
-const AGG_BR = agregarUFs(UFS);
 
 // Barras horizontais com valor de 2026 (barra) e marcador de 2022 (traço)
-function barrasComparadas(alvo, linhas, { dom = [0, 30], ml = 120, lh = 26, cor = "--abst" } = {}) {
+function barrasComparadas(alvo, linhas, { dom = [0, 30], ml = 120, lh = 26, cor = "--abst", rot26 = "2026", rot22 = "2022" } = {}) {
   const box = $(alvo); box.innerHTML = "";
+  linhas = linhas.filter(d => d.v26 != null && !Number.isNaN(d.v26));
   const W = 560, H = linhas.length * lh + 26;
   const x = d3.scaleLinear(dom, [ml, W - 54]);
   const svg = d3.select(box).append("svg").attr("viewBox", `0 0 ${W} ${H}`);
@@ -955,7 +1079,7 @@ function barrasComparadas(alvo, linhas, { dom = [0, 30], ml = 120, lh = 26, cor 
   g.append("rect").attr("width", W).attr("height", lh).attr("fill", "transparent").on("mousemove", (ev, d) => mostrarTip(ev, d.tip)).on("mouseleave", esconderTip);
   svg.append("g").attr("class", "eixo").attr("transform", `translate(0,${linhas.length * lh + 4})`).call(d3.axisBottom(x).ticks(5).tickFormat(v => v + "%").tickSizeOuter(0)).select(".domain").remove();
   const leg = el("div", { className: "legenda" });
-  leg.innerHTML = `<div class="chips"><span class="chip"><i style="background:var(${cor})"></i>2026</span><span class="chip"><i style="background:var(--ink);width:3px"></i>2022</span></div>`;
+  leg.innerHTML = `<div class="chips"><span class="chip"><i style="background:var(${cor})"></i>${rot26}</span><span class="chip"><i style="background:var(--ink);width:3px"></i>${rot22}</span></div>`;
   box.prepend(leg);
 }
 const tipAbst = (nome, v26, v22, extra = "") => `<b>${nome}</b>${linhaTip(css("--abst"), "2026", fmtP(v26))}${linhaTip(null, "2022", fmtP(v22))}${linhaTip(null, "Variação", fmtPP(v26 - v22))}${extra}`;
@@ -972,9 +1096,9 @@ function selecionarRegiao(reg) {
 function localizadorReg() {
   const box = $("#loc-reg"); box.innerHTML = "";
   const W = 300, H = 300;
-  const path = d3.geoPath(d3.geoMercator().fitSize([W, H], D.geo.uf));
+  const path = d3.geoPath(d3.geoMercator().fitSize([W, H], G.uf));
   const svg = d3.select(box).append("svg").attr("viewBox", `0 0 ${W} ${H}`);
-  svg.selectAll("path").data(D.geo.uf.features).join("path").attr("d", path)
+  svg.selectAll("path").data(G.uf.features).join("path").attr("d", path)
     .attr("class", f => UF_IDX.get(f.properties.id).regiao === estadoReg.reg ? "ativo" : null)
     .on("mousemove", (ev, f) => { const u = UF_IDX.get(f.properties.id); mostrarTip(ev, `<b>${u.regiao}</b><div class="muted">${u.nome} · clique para analisar</div>`); })
     .on("mouseleave", esconderTip)
@@ -1020,7 +1144,7 @@ function tabelaReg(destaque) {
 }
 function mapaReg() {
   const reg = estadoReg.reg, esc = escala(estadoReg.ind);
-  const geo = { type: "FeatureCollection", features: D.geo.mun.features.filter(f => f.properties.id !== NORONHA && (MUN_IDX.get(f.properties.id) || {}).regiao === reg) };
+  const geo = { type: "FeatureCollection", features: G.mun.features.filter(f => f.properties.id !== NORONHA && (MUN_IDX.get(f.properties.id) || {}).regiao === reg) };
   const r = desenhaMapa("#mapa-reg", geo, {
     W: 900, autoH: true,
     getObj: id => MUN_IDX.get(id),
@@ -1029,7 +1153,7 @@ function mapaReg() {
     onClick: o => { detalheBR(o, "#det-reg"); tabelaReg(o.ibge); },
   });
   mapaReg.ref = r;
-  r.g.selectAll("path.ufc").data(D.geo.uf.features.filter(f => UF_IDX.get(f.properties.id).regiao === reg)).join("path")
+  r.g.selectAll("path.ufc").data(G.uf.features.filter(f => UF_IDX.get(f.properties.id).regiao === reg)).join("path")
     .attr("class", "contorno ufc").attr("d", r.path).style("stroke-opacity", .8).style("stroke-width", 1.3);
   legenda("#leg-reg", estadoReg.ind, esc, estadoReg.ind !== "venc" ? `${esc.rot || "Margem: Flávio − Lula (p.p.)"} · linhas escuras: divisas dos estados` : null);
 }
@@ -1042,10 +1166,10 @@ function pearson(xs, ys) {
   return num / Math.sqrt(d3.sum(xs, x => (x - mx) ** 2) * d3.sum(ys, y => (y - my) ** 2));
 }
 function abstencao() {
-  const grandes = MUN.filter(m => m.eleitores > 10000);
+  const grandes = MUN.filter(m => m.eleitores > 10000 && m.p_abstencao != null);
   const maior = d3.greatest(grandes, m => m.p_abstencao), menor = d3.least(grandes, m => m.p_abstencao);
   const subiu = UFS.filter(u => u.d_abst > 0).length;
-  $("#abst-lede").textContent = `${fmtMi(R.abstencao)} de eleitores aptos não foram votar no 1º turno: ${fmtP(+R.p_abstencao)} do total, praticamente o mesmo nível de 2022 (${fmtP(R.p_abstencao22)}). Só no Brasil, a abstenção foi de ${fmtP(ABST_BR)}. A abstenção subiu em ${subiu} e caiu em ${27 - subiu} estados; no exterior, passou de ${fmtP(ZZ.p_abstencao22)} para ${fmtP(ZZ.p_abstencao)}.`;
+  $("#abst-lede").textContent = `${fmtMi(R.abstencao)} de eleitores aptos não foram votar no ${TURNO}º turno: ${fmtP(+R.p_abstencao)} do total, ${Math.abs(R.p_abstencao - R.p_abstencao22) < 0.5 ? "praticamente o mesmo nível" : R.p_abstencao > R.p_abstencao22 ? "acima do nível" : "abaixo do nível"} de 2022 (${fmtP(R.p_abstencao22)}). Só no Brasil, a abstenção foi de ${fmtP(ABST_BR)}. A abstenção subiu em ${subiu} e caiu em ${27 - subiu} estados; no exterior, passou de ${fmtP(ZZ.p_abstencao22)} para ${fmtP(ZZ.p_abstencao)}.`;
   kpis("#kpis-abst", [
     { l: "Abstenção geral", v: fmtP(+R.p_abstencao, 2), d: `2022: ${fmtP(R.p_abstencao22, 2)} (${fmtPP(R.p_abstencao - R.p_abstencao22, 2)})`, cor: "var(--abst)" },
     { l: "Só no Brasil", v: fmtP(ABST_BR, 2), d: `2022: ${fmtP(R.p_abstencao22_br, 2)} (${fmtPP(ABST_BR - R.p_abstencao22_br, 2)})` },
@@ -1059,9 +1183,10 @@ function abstencao() {
   const regs = REGIOES.map(r => [r, AGG_REG.get(r).d_abst]);
   const lista = arr => { const t = arr.map(([r, d]) => `no ${r} (${fmtPP(d)})`); return t.length > 1 ? t.slice(0, -1).join(", ") + " e " + t[t.length - 1] : t.join(""); };
   const cai = regs.filter(x => x[1] < 0).sort((a, b) => a[1] - b[1]), sobe = regs.filter(x => x[1] > 0).sort((a, b) => b[1] - a[1]);
-  $("#abst-var-texto").textContent = `Variação da abstenção entre o 1º turno de 2022 e o de 2026. Caiu ${lista(cai)}; subiu ${lista(sobe)}. `
+  $("#abst-var-texto").textContent = `Variação da abstenção entre o ${TURNO}º turno de 2022 e o de 2026. Caiu ${lista(cai)}; subiu ${lista(sobe)}. `
     + `Nos municípios, subiu em ${fmtInt.format(R.mun_abst_subiu)} e caiu em ${fmtInt.format(R.mun_abst_caiu)}.`;
   $("#det-abst").innerHTML = `<p class="nota">Clique em um município do mapa para ver o detalhe aqui.</p>`;
+  $("#nota-abst-turno").textContent = `A comparação com 2022 usa o ${TURNO}º turno presidencial daquele ano.`;
   barrasComparadas("#g-abst-reg", REGIOES.map(r => { const o = AGG_REG.get(r); return { rot: r, v26: o.p_abstencao, v22: o.p_abstencao22, tip: tipAbst(r, o.p_abstencao, o.p_abstencao22) }; }), { dom: [0, 30], ml: 100, lh: 30 });
   halteresAbst();
   barrasComparadas("#g-abst-porte", FAIXAS.map(([rot, a, b]) => {
@@ -1078,7 +1203,7 @@ function abstencao() {
 }
 function mapaAbst(alvo, k, legAlvo, titLegenda) {
   const esc = escala(k);
-  const r = desenhaMapa(alvo, D.geo.mun, {
+  const r = desenhaMapa(alvo, G.mun, {
     getObj: id => MUN_IDX.get(id),
     cor: o => o[k] == null ? css("--line") : esc.cor(o[k]),
     tip: o => tipAbst(`${o.nome} (${o.uf})`, o.p_abstencao, o.p_abstencao22, linhaTip(null, "Eleitores", fmtInt.format(o.eleitores))),
@@ -1094,7 +1219,7 @@ function mapaAbst(alvo, k, legAlvo, titLegenda) {
 // "A abstenção mudou de lugar": 2022 (cinza) → 2026 (roxo se subiu, verde-azulado se caiu)
 function halteresAbst() {
   const box = $("#g-abst-uf"); box.innerHTML = "";
-  const dados = [...UFS].sort((a, b) => b.d_abst - a.d_abst);
+  const dados = UFS.filter(u => u.d_abst != null).sort((a, b) => b.d_abst - a.d_abst);
   const W = 480, lh = 22, ml = 150, mr = 52, H = dados.length * lh + 30;
   const x = d3.scaleLinear([14, 26], [ml, W - mr]);
   const svg = d3.select(box).append("svg").attr("viewBox", `0 0 ${W} ${H}`).attr("role", "img").attr("aria-label", "Abstenção por estado em 2022 e 2026");
@@ -1123,20 +1248,20 @@ function dispersaoAbst() {
   svg.append("g").attr("class", "eixo").attr("transform", `translate(${ml},0)`).call(d3.axisLeft(y).ticks(5).tickFormat(v => v + "%").tickSize(0)).select(".domain").remove();
   svg.append("text").attr("x", W - mr).attr("y", H - 4).attr("text-anchor", "end").text("Abstenção →");
   svg.append("text").attr("x", ml + 4).attr("y", mt + 10).text("% de Lula ↑");
-  svg.append("g").selectAll("circle").data([...MUN].sort((a, b) => b.eleitores - a.eleitores)).join("circle")
+  const pts = MUN.filter(m => m.p_abstencao != null && m.p_lula != null);
+  svg.append("g").selectAll("circle").data(pts.sort((a, b) => b.eleitores - a.eleitores)).join("circle")
     .attr("cx", m => x(m.p_abstencao)).attr("cy", m => y(m.p_lula)).attr("r", m => rr(m.eleitores))
     .attr("fill", m => corCand(m.venc)).attr("fill-opacity", .45).attr("stroke", css("--surface")).attr("stroke-width", .4)
     .on("mousemove", (ev, m) => mostrarTip(ev, `<b>${m.nome} (${m.uf})</b>${linhaTip(css("--abst"), "Abstenção", fmtP(m.p_abstencao))}${linhaTip(css("--lula"), "Lula", fmtP(m.p_lula))}${linhaTip(css("--flavio"), "Flávio", fmtP(m.p_flavio))}${linhaTip(null, "Eleitores", fmtInt.format(m.eleitores))}`))
     .on("mouseleave", esconderTip);
-  const rL = pearson(MUN.map(m => m.p_abstencao), MUN.map(m => m.p_lula));
-  const rF = pearson(MUN.map(m => m.p_abstencao), MUN.map(m => m.p_flavio));
+  const rL = pearson(pts.map(m => m.p_abstencao), pts.map(m => m.p_lula));
+  const rF = pearson(pts.map(m => m.p_abstencao), pts.map(m => m.p_flavio));
   const fr = v => v.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-  $("#abst-corr").innerHTML = `Cada círculo é um município (área proporcional aos eleitores; cor do candidato vencedor). Correlação entre abstenção e voto nos ${fmtInt.format(MUN.length)} municípios: Lula r = ${fr(rL)}; Flávio r = ${fr(rF)}. Correlação descreve uma associação, não indica causa.`;
+  $("#abst-corr").innerHTML = `Cada círculo é um município (área proporcional aos eleitores; cor do candidato vencedor). Correlação entre abstenção e voto nos ${fmtInt.format(pts.length)} municípios: Lula r = ${fr(rL)}; Flávio r = ${fr(rF)}. Correlação descreve uma associação, não indica causa.`;
 }
 
 /* ---------- aba Exterior ---------- */
 const estadoExt = { ind: "margem" };
-const PAISES = D.paises.map(p => ({ ...p, margem: p.p_flavio == null ? null : p.p_flavio - p.p_lula, eleitores: p.eleitores }));
 function exterior() {
   kpis("#kpis-ext", [
     { l: "Eleitores aptos no exterior", v: fmtInt.format(ZZ.eleitores), d: `em ${PAISES.length} países e ${D.cidades_ext.length} cidades` },
@@ -1159,10 +1284,10 @@ function exterior() {
 function mapaMundo() {
   const box = $("#mapa-mundo"); box.innerHTML = "";
   const W = 1160, H = 560;
-  const proj = d3.geoNaturalEarth1().fitExtent([[0, 10], [W, H - 10]], D.geo.mundo);
+  const proj = d3.geoNaturalEarth1().fitExtent([[0, 10], [W, H - 10]], G.mundo);
   const path = d3.geoPath(proj);
   const svg = d3.select(box).append("svg").attr("viewBox", `0 0 ${W} ${H}`).attr("role", "img").attr("aria-label", "Mapa-múndi com eleitores brasileiros por país");
-  svg.append("g").selectAll("path").data(D.geo.mundo.features).join("path").attr("class", "terra").attr("d", path)
+  svg.append("g").selectAll("path").data(G.mundo.features).join("path").attr("class", "terra").attr("d", path)
     .style("fill", f => f.properties.id === "BRA" ? css("--line-strong") : null);
   const esc = estadoExt.ind === "margem"
     ? { cor: d3.scaleDiverging([-50, 0, 50], t => t < .5 ? d3.interpolateLab(css("--lula"), css("--mid"))(t * 2) : d3.interpolateLab(css("--mid"), css("--flavio"))((t - .5) * 2)).clamp(true), dom: [-50, 50], ticks: ["Lula +50", "0", "Flávio +50"], rot: "Margem: Flávio − Lula (p.p.)" }
@@ -1179,8 +1304,11 @@ function mapaMundo() {
 
 /* ---------- aba 2022 × 2026 ---------- */
 const estadoComp = { ind: "d_lula" };
+const LEDE_COMP_T1 = $("#comp-lede").textContent;
 function comparar() {
   const f = D.candidatos.find(c => c.n === "22"), l = D.candidatos.find(c => c.n === "13");
+  $("#comp-lede").textContent = TURNO === 1 ? LEDE_COMP_T1
+    : `Em 2022, o 2º turno opôs Lula e Jair Bolsonaro, e Lula venceu com ${fmtP(R.p_lula22)} dos votos válidos. Em 2026, o adversário de Lula é Flávio Bolsonaro, candidato do PL. A comparação abaixo usa o percentual de votos válidos do 2º turno de cada ano; como os candidatos do campo bolsonarista são diferentes, leia a variação do PL como mudança do campo político, não de uma mesma pessoa.`;
   const ufsPerdeu = UFS.filter(u => u.d_lula < 0).length;
   kpis("#kpis-comp", [
     { l: "Lula, % dos válidos", v: `${fmtP(R.p_lula22)} → ${fmtP(l.pct)}`, d: fmtPP(l.pct - R.p_lula22), cor: "var(--lula)" },
@@ -1195,7 +1323,7 @@ function comparar() {
 }
 function halteres(alvo, k22, k26, kd, cor26, nome22, nome26) {
   const box = $(alvo); box.innerHTML = "";
-  const dados = [...UFS].sort((a, b) => a[kd] - b[kd]);
+  const dados = UFS.filter(u => u[kd] != null).sort((a, b) => a[kd] - b[kd]);
   const W = 480, lh = 22, ml = 34, mr = 70, H = dados.length * lh + 30;
   const x = d3.scaleLinear([15, 80], [ml, W - mr]);
   const svg = d3.select(box).append("svg").attr("viewBox", `0 0 ${W} ${H}`).attr("role", "img").attr("aria-label", `${nome22} e ${nome26} por estado`);
@@ -1213,27 +1341,398 @@ function halteres(alvo, k22, k26, kd, cor26, nome22, nome26) {
 function mapaComp() {
   const esc = escala(estadoComp.ind);
   const k = estadoComp.ind;
-  const r = desenhaMapa("#mapa-comp", D.geo.mun, {
+  const r = desenhaMapa("#mapa-comp", G.mun, {
     W: 800, H: 760,
     getObj: id => MUN_IDX.get(id),
     cor: o => o[k] == null ? css("--line") : esc.cor(o[k]),
     tip: o => `<b>${o.nome} (${o.uf})</b>${linhaTip(null, "Lula 2022 → 2026", `${fmtP(o.p_lula22)} → ${fmtP(o.p_lula)}`)}${linhaTip(null, "PL 2022 → 2026", `${fmtP(o.p_bolsonaro22)} → ${fmtP(o.p_flavio)}`)}${linhaTip(null, "Variação", fmtPP(o[k]))}`,
   });
-  r.g.selectAll("path.ufs").data(D.geo.uf.features).join("path").attr("class", "contorno").attr("d", r.path);
+  r.g.selectAll("path.ufs").data(G.uf.features).join("path").attr("class", "contorno").attr("d", r.path);
   legenda("#leg-comp", k, esc, k === "d_lula" ? "Variação de Lula, 2022 → 2026 (p.p. dos válidos)" : "Variação do PL, Jair 2022 → Flávio 2026 (p.p. dos válidos)");
+}
+
+/* ---------- 2º turno: motor ao vivo ---------- */
+// Lê a API do TSE no navegador e monta, para o 2º turno, os mesmos dados que o 03_painel.py monta a partir dos arquivos
+// (porte de extrair() e linha_wide() de tse_comum.py). Na totalização final, o resultado é idêntico ao do pipeline.
+const BASE = DADOS.base;
+const E2 = BASE.eleicao, E2P = "e" + E2.padStart(6, "0");
+const FONTE_VIVO = (() => {
+  const q = new URLSearchParams(location.search).get("fonte");
+  if (q === "simulador") return "http://127.0.0.1:8767/oficial";
+  if (q && /^https?:[/][/]/.test(q)) return q.replace(/[/]$/, "");
+  return "https://resultados.tse.jus.br/oficial";
+})();
+const urlVivo = c => `${FONTE_VIVO}/ele2026/${E2}/dados/${c}`;
+const urlBR = () => urlVivo(`br/br-c0001-${E2P}-u.json`), urlAB = () => urlVivo(`br/br-${E2P}-ab.json`);
+const urlUF = sg => urlVivo(`${sg}/${sg}-c0001-${E2P}-u.json`), urlMun = (sg, cd) => urlVivo(`${sg}/${sg}${cd}-c0001-${E2P}-u.json`);
+const TOTAL_LOCAIS = d3.sum(BASE.ufs_cfg, u => u[2].length);
+const VIVO = { estado: "aguardando", br: null, ab: null, uf: new Map(), mun: new Map(), finais: new Set(), d2: null, X: null,
+  atualizado: null, erros: 0, timer: null, rodando: false, rastreando: false, curva: [], ultimaRender: 0, renderPendente: null };
+const estadoVivo = { nivel: "mun", ind: "margem" };
+const IBGE_TSE = new Map(Object.entries(BASE.mun_tse).map(([tse, ibge]) => [ibge, tse]));
+const PRINC = { "22": "flavio", "13": "lula", "70": "cury", "14": "renan", "55": "caiado" };
+// Arredondamento igual ao round() do Python: decimal correto a partir do valor binário e, em empate exato, para o par
+function arredPy(x, n) {
+  if (x == null || Number.isNaN(x) || !Number.isFinite(x)) return null;
+  // Empate só quando a expansão decimal exata do valor binário termina em 5 seguido de zeros
+  const exato = Math.abs(x).toFixed(Math.min(100, n + 60)), resto = exato.slice(exato.indexOf(".") + 1 + n);
+  if (/^50*$/.test(resto)) { const piso = Math.floor(Math.abs(x) * 10 ** n); return Math.sign(x) * (piso % 2 === 0 ? piso : piso + 1) / 10 ** n; }
+  return +x.toFixed(n);
+}
+const r3 = x => arredPy(x, 3), r2 = x => arredPy(x, 2);
+const nTSE = x => x == null || x === "" ? 0 : +x;
+const tituloPy = s => s.toLowerCase().replace(/(^|[^a-zà-ÿ])([a-zà-ÿ])/g, (m, a, b) => a + b.toUpperCase());
+async function buscarJSON(url) { const r = await fetch(url); if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); }
+
+function extrairJS(arq) {
+  const e = arq.e, v = arq.v;
+  // Aptos das seções já totalizadas (na totalização final, igual ao total de aptos usado pelo pipeline)
+  const resumo = { eleitores: nTSE(e.est), comparecimento: nTSE(e.c), abstencao: nTSE(e.a), validos: nTSE(v.vv), brancos: nTSE(v.vb), nulos: nTSE(v.tvn) };
+  const votos = [];
+  for (const agr of arq.carg[0].agr) for (const par of agr.par) for (const c of par.cand) votos.push({ numero: c.n, candidato: c.nmu, partido: par.sg, votos: nTSE(c.vap) });
+  return [resumo, votos];
+}
+function linhaWideJS([res, votos]) {
+  const l = { ...res }, val = res.validos || 1;
+  for (const k of Object.values(PRINC)) l["v_" + k] = 0;
+  let out = 0;
+  for (const v of votos) { const k = PRINC[v.numero]; if (k) l["v_" + k] = v.votos; else out += v.votos; }
+  l.v_outros = out;
+  for (const k of [...Object.values(PRINC), "outros"]) l["p_" + k] = r3(100 * l["v_" + k] / val);
+  const venc = votos.length ? votos.reduce((a, b) => b.votos > a.votos ? b : a) : null;
+  l.vencedor_num = venc && venc.votos > 0 ? venc.numero : null;
+  l.p_abstencao = r3(100 * res.abstencao / (res.eleitores || 1));
+  l.p_brancos_nulos = r3(100 * (res.brancos + res.nulos) / (res.comparecimento || 1));
+  l.margem_flavio_lula = r3(l.p_flavio - l.p_lula);
+  return l;
+}
+const CAMPOS = ["p_flavio", "p_lula", "p_cury", "p_renan", "p_caiado", "p_outros", "p_abstencao", "p_brancos_nulos"];
+const somaRef = cods => { const s = [0, 0, 0, 0, 0]; cods.forEach(c => (BASE.ref22[c] || []).forEach((x, i) => { if (x != null) s[i] += x; })); return s; };
+function montarAoVivo() {
+  const br = VIVO.br, linhaBR = linhaWideJS(extrairJS(br));
+  const temDados = l => l && l.eleitores > 0;
+  const linhaDe = j => j ? linhaWideJS(extrairJS(j)) : null;
+  // Municípios brasileiros (mesma ordem e metadados do 1º turno)
+  const ci = Object.fromEntries(DADOS.t1.mun_cols.map((c, i) => [c, i]));
+  let munF = 0, munL = 0, lulaCaiu = 0, comparaveis = 0, abstSubiu = 0, abstCaiu = 0;
+  const mun = DADOS.t1.mun.map(r1 => {
+    const ibge = r1[ci.ibge], cod = IBGE_TSE.get(ibge), ref = BASE.ref22[cod] || [];
+    const l = linhaDe(VIVO.mun.get(cod));
+    const pl22 = ref[0] ? r3(100 * ref[1] / ref[0]) : null, pb22 = ref[0] ? r3(100 * ref[2] / ref[0]) : null;
+    const pa22 = ref[3] ? r3(100 * ref[4] / ref[3]) : null;
+    const ok = temDados(l);
+    if (ok) {
+      if (l.vencedor_num === "22") munF++; else if (l.vencedor_num === "13") munL++;
+      if (pl22 != null) { comparaveis++; if (r3(l.p_lula - pl22) < 0) lulaCaiu++; }
+      if (pa22 != null) { const d = r3(l.p_abstencao - pa22); if (d > 0) abstSubiu++; else if (d < 0) abstCaiu++; }
+    }
+    return [ibge, r1[ci.nome], r1[ci.uf], ok ? l.eleitores : 0, ok ? l.validos : 0, ...CAMPOS.map(c => ok ? r2(l[c]) : null),
+      r2(pl22), r2(pb22), ok ? l.vencedor_num : null, r1[ci.meso], r1[ci.imediata], r2(pa22), ref[3] == null ? null : ref[3]];
+  });
+  // UFs + exterior (2022 agregado a partir dos municípios, como no pipeline)
+  const ufT1 = new Map(DADOS.t1.ufs.map(u => [u.uf, u]));
+  const ufs = BASE.ufs_cfg.map(([sg, , cods]) => {
+    const U = sg.toUpperCase(), l = linhaDe(VIVO.uf.get(sg)), ok = temDados(l), t1u = ufT1.get(U);
+    const [v22, l22, b22, ap22, ab22] = somaRef(cods);
+    return { uf: U, nome: t1u.nome, regiao: t1u.regiao, eleitores: ok ? l.eleitores : 0, comparecimento: ok ? l.comparecimento : 0,
+      validos: ok ? l.validos : 0, v_flavio: ok ? l.v_flavio : 0, v_lula: ok ? l.v_lula : 0, v_outros: ok ? l.validos - l.v_flavio - l.v_lula : 0,
+      ...Object.fromEntries(CAMPOS.map(c => [c, ok ? r2(l[c]) : null])),
+      p_lula22: r2(r3(100 * l22 / v22)), p_bolsonaro22: r2(r3(100 * b22 / v22)), aptos22: ap22, abst22: ab22, p_abstencao22: r2(r3(100 * ab22 / ap22)),
+      validos22: v22, v_lula22: l22, v_bolsonaro22: b22, venc: ok ? l.vencedor_num : null };
+  });
+  // Exterior: cidades -> países
+  const cidades = BASE.ext.map(([cod, cidade, iso3, pais, continente]) => {
+    const l = linhaDe(VIVO.mun.get(cod)), ref = BASE.ref22[cod] || [];
+    return { cod, cidade, iso3, pais, continente, l: l || linhaWideJS([{ eleitores: 0, comparecimento: 0, abstencao: 0, validos: 0, brancos: 0, nulos: 0 }, []]), ref };
+  });
+  const paises = d3.rollups(cidades, v => {
+    const S = k => d3.sum(v, c => c.l[k]), Sr = i => d3.sum(v, c => c.ref[i] || 0);
+    const val = S("validos"), el = S("eleitores"), v22 = Sr(0), ap22 = Sr(3);
+    const pc = k => val > 0 ? r2(r3(100 * S(k) / val)) : null;
+    return { iso3: v[0].iso3, pais: v[0].pais, continente: v[0].continente, cidades: v.length, eleitores: el, comparecimento: S("comparecimento"),
+      validos: val, v_flavio: S("v_flavio"), v_lula: S("v_lula"), p_flavio: pc("v_flavio"), p_lula: pc("v_lula"),
+      p_abstencao: el > 0 ? r2(r3(100 * S("abstencao") / el)) : null,
+      p_lula22: v22 > 0 ? r2(r3(100 * Sr(1) / v22)) : null, p_bolsonaro22: v22 > 0 ? r2(r3(100 * Sr(2) / v22)) : null,
+      p_abstencao22: ap22 > 0 ? r2(r3(100 * Sr(4) / ap22)) : null, lonlat: BASE.lonlat[v[0].iso3] };
+  }, c => c.iso3).map(([, o]) => o).sort((a, b) => b.eleitores - a.eleitores || (a.iso3 < b.iso3 ? -1 : 1));   // empates: ordem alfabética, como no pipeline
+  const cidades_ext = cidades.map(c => ({ cidade: c.cidade, pais: c.pais, eleitores: c.l.eleitores, comparecimento: c.l.comparecimento,
+    p_flavio: c.l.eleitores > 0 ? r2(c.l.p_flavio) : null, p_lula: c.l.eleitores > 0 ? r2(c.l.p_lula) : null })).sort((a, b) => b.eleitores - a.eleitores);
+  // Resumo nacional
+  const [, votosBR] = extrairJS(br);
+  const refTodos = Object.values(BASE.ref22), sR = i => d3.sum(refTodos, x => x[i] || 0);
+  const ufsBR = ufs.filter(u => u.uf !== "ZZ");
+  const resumo = { ...linhaBR, p_lula22: r3(100 * sR(1) / sR(0)), p_bolsonaro22: r3(100 * sR(2) / sR(0)),
+    mun_flavio: munF, mun_lula: munL, mun_lula_caiu: lulaCaiu, mun_comparaveis: comparaveis, mun_abst_subiu: abstSubiu, mun_abst_caiu: abstCaiu,
+    p_abstencao22: r3(100 * sR(4) / sR(3)), p_abstencao22_br: r3(100 * d3.sum(ufsBR, u => u.abst22) / d3.sum(ufsBR, u => u.aptos22)) };
+  const candidatos = votosBR.map(v => ({ n: v.numero, nome: tituloPy(v.candidato), partido: v.partido, votos: v.votos, pct: r2(100 * v.votos / (linhaBR.validos || 1)) }))
+    .sort((a, b) => b.votos - a.votos);
+  const status = { turno: 2, pst: br.s.pst, final: br.tf === "s", gerado: `${br.dg || ""} ${br.hg || ""}`.trim(), totalizado: `${br.dt || ""} ${br.ht || ""}`.trim() };
+  return { turno: 2, status, resumo, candidatos, ufs, mun_cols: DADOS.t1.mun_cols, mun, paises, cidades_ext };
+}
+
+// % de seções apuradas por município (IBGE) e por UF, para o mapa ao vivo
+function pstMunicipio(ibge) {
+  if (DADOS.t2) return 100;
+  const j = VIVO.mun.get(IBGE_TSE.get(ibge)); return j ? pstNum(j.s.pst) : null;
+}
+function pstUF(sg) { if (DADOS.t2) return 100; const j = VIVO.uf.get(sg.toLowerCase()); return j ? pstNum(j.s.pst) : null; }
+
+const CHAVE_CURVA = `curva-${E2}-${FONTE_VIVO.includes("127.0.0.1") ? "sim" : "tse"}`;
+function carregarCurva() { try { VIVO.curva = JSON.parse(localStorage.getItem(CHAVE_CURVA) || "[]"); } catch (e) { VIVO.curva = []; } }
+function registrarCurva() {
+  const br = VIVO.br, p = pstNum(br.s.pst), [res, votos] = extrairJS(br);
+  if (!res.validos) return;
+  const pc = n => 100 * (votos.find(v => v.numero === n) || { votos: 0 }).votos / res.validos;
+  const ult = VIVO.curva[VIVO.curva.length - 1];
+  if (ult && ult.p === p) return;
+  VIVO.curva.push({ p, l: +pc("13").toFixed(3), f: +pc("22").toFixed(3), h: `${br.hg || ""}` });
+  try { localStorage.setItem(CHAVE_CURVA, JSON.stringify(VIVO.curva)); } catch (e) {}
+}
+
+async function cicloVivo() {
+  if (VIVO.rodando || document.hidden) return;
+  VIVO.rodando = true;
+  try {
+    const [br, ab] = await Promise.all([buscarJSON(urlBR()), buscarJSON(urlAB())]);
+    VIVO.br = br; VIVO.ab = ab;
+    const lidos = await Promise.all(BASE.ufs_cfg.map(([sg]) => buscarJSON(urlUF(sg)).then(j => [sg, j]).catch(() => null)));
+    lidos.forEach(x => { if (x) VIVO.uf.set(x[0], x[1]); });
+    VIVO.erros = 0; VIVO.atualizado = new Date();
+    VIVO.estado = br.tf === "s" ? "encerrada" : pstNum(br.s.pst) > 0 ? "apurando" : "aguardando";
+    registrarCurva();
+    atualizarVivo(true);
+    if (VIVO.estado !== "aguardando") rastrearMunicipios();
+  } catch (e) {
+    VIVO.erros++; VIVO.estado = "erro"; mostrarStatusVivo();
+  } finally {
+    VIVO.rodando = false; agendarVivo();
+  }
+}
+function agendarVivo() {
+  clearTimeout(VIVO.timer);
+  if (VIVO.estado === "encerrada" && VIVO.finais.size >= TOTAL_LOCAIS) return;   // tudo apurado e lido: para
+  const intervalo = FONTE_VIVO.includes("127.0.0.1") ? 15 : 60;   // simulador local: leituras mais frequentes
+  const espera = VIVO.erros ? Math.min(300, intervalo * 2 ** (VIVO.erros - 1)) : intervalo;
+  VIVO.timer = setTimeout(cicloVivo, espera * 1000);
+}
+// Lê os municípios ainda não concluídos (6 conexões), pulando estados que ainda não enviaram nada
+async function rastrearMunicipios() {
+  if (VIVO.rastreando) return;
+  VIVO.rastreando = true;
+  const abUF = new Map(((VIVO.ab && VIVO.ab.abr) || []).map(a => [a.cdabr, a]));
+  const fila = [];
+  for (const [sg, , cods] of BASE.ufs_cfg) {
+    const a = abUF.get(sg);
+    if (a && +a.munnr >= cods.length && VIVO.estado !== "encerrada") continue;
+    for (const cd of cods) if (!VIVO.finais.has(cd)) fila.push([sg, cd]);
+  }
+  let i = 0, lidos = 0;
+  const trabalhador = async () => {
+    while (i < fila.length && !document.hidden) {
+      const [sg, cd] = fila[i++];
+      try {
+        const j = await buscarJSON(urlMun(sg, cd));
+        VIVO.mun.set(cd, j);
+        if (j.s && j.s.pst === "100,00") VIVO.finais.add(cd);
+        if (++lidos % 300 === 0) atualizarVivo();
+      } catch (e) { /* tenta de novo no próximo ciclo */ }
+    }
+  };
+  await Promise.all(Array.from({ length: 6 }, trabalhador));
+  VIVO.rastreando = false;
+  atualizarVivo(true);
+  if (VIVO.estado === "encerrada" && VIVO.finais.size < TOTAL_LOCAIS) agendarVivo();
+}
+// Recalcula o 2º turno e redesenha (no máximo a cada 8 s, salvo quando forçado)
+function atualizarVivo(forcar = false) {
+  if (!VIVO.br && !DADOS.t2) return;
+  const agora = Date.now();
+  if (!forcar && agora - VIVO.ultimaRender < 8000) {
+    if (!VIVO.renderPendente) VIVO.renderPendente = setTimeout(() => { VIVO.renderPendente = null; atualizarVivo(true); }, 8000);
+    return;
+  }
+  VIVO.ultimaRender = agora;
+  if (!DADOS.t2) { VIVO.d2 = montarAoVivo(); VIVO.X = derivar(VIVO.d2); }
+  liberarTurno2();
+  mostrarStatusVivo();
+  if (TURNO === 2 && !DADOS.t2) { prepararTurno(VIVO.d2); placar(); atualizarFaixa(); }
+  feitos.clear();
+  if (abaAtual === "aovivo" || TURNO === 2) { RENDER[abaAtual](); feitos.add(abaAtual); }
+}
+
+/* ---------- seletor de turno ---------- */
+const dadosTurno2 = () => DADOS.t2 || (VIVO.d2 && VIVO.d2.resumo.validos > 0 ? VIVO.d2 : null);
+function liberarTurno2() {
+  const b = $('#ctl-turno button[data-v="2"]'), ok = !!dadosTurno2();
+  b.disabled = !ok;
+  b.title = ok ? "" : "Disponível quando a apuração do 2º turno começar";
+}
+function atualizarFaixa() {
+  const fx = $("#faixa-parcial");
+  const parcial = TURNO === 2 && D.status && !D.status.final;
+  fx.hidden = !parcial;
+  if (parcial) fx.textContent = `Dados parciais do 2º turno: ${fmtP(pstNum(D.status.pst), 2)} das seções apuradas${VIVO.atualizado ? `, lidos às ${VIVO.atualizado.toLocaleTimeString("pt-BR")}` : ""}. Os números mudam a cada minuto até a totalização final.`;
+}
+function usarTurno(t) {
+  if (t === 2 && !dadosTurno2()) { marcarSeg("#ctl-turno", String(TURNO)); return; }
+  TURNO = t;
+  marcarSeg("#ctl-turno", String(t));
+  prepararTurno(t === 1 ? DADOS.t1 : dadosTurno2());
+  atualizarFaixa();
+  feitos.clear(); placar(); RENDER[abaAtual](); feitos.add(abaAtual);
+  try { localStorage.setItem("turno", String(t)); } catch (e) {}
+}
+
+/* ---------- aba "2º turno ao vivo" ---------- */
+const NOMES_ESTADO = { aguardando: "Aguardando a apuração", apurando: "Apuração em andamento", encerrada: "Apuração encerrada", erro: "Sem conexão com o TSE" };
+function mostrarStatusVivo() {
+  const est = DADOS.t2 && DADOS.t2.status.final ? "encerrada" : VIVO.estado;
+  const pst = DADOS.t2 ? 100 : VIVO.br ? pstNum(VIVO.br.s.pst) : 0;
+  const ponto = $("#ponto-vivo");
+  ponto.classList.toggle("ativo", est === "apurando");
+  ponto.style.background = est === "apurando" ? "var(--lula)" : est === "encerrada" ? "var(--accent)" : "var(--muted)";
+  let det = "";
+  if (est === "erro") det = `Não foi possível ler a API do TSE a partir desta página. Tentando de novo em instantes. Se o problema continuar, acompanhe em <a href="https://ladriasces.github.io/Elei-es-2026---LADRI/#aovivo" target="_blank" rel="noopener">ladriasces.github.io/Elei-es-2026---LADRI</a>.`;
+  else if (DADOS.t2) det = `Resultado final do TSE (totalização de ${DADOS.t2.status.totalizado || DADOS.t2.status.gerado}).`;
+  else if (VIVO.atualizado) det = `Lido às ${VIVO.atualizado.toLocaleTimeString("pt-BR")} · ${est === "encerrada" && VIVO.finais.size >= TOTAL_LOCAIS ? "leitura concluída" : "nova leitura a cada minuto"} · gerado pelo TSE em ${VIVO.br.dg} ${VIVO.br.hg}`;
+  const sim = FONTE_VIVO.includes("127.0.0.1") ? ` <span class="selo aguardando">simulador</span>` : "";
+  $("#vivo-status").innerHTML = `<span class="selo ${est}">${NOMES_ESTADO[est]}</span><span class="estado num">${fmtP(pst, pst === 100 ? 0 : 2)} das seções apuradas</span>${sim}<span class="muted">${det}</span>`;
+  $("#vivo-progresso").style.width = `${pst}%`;
+}
+function aovivo() {
+  mostrarStatusVivo();
+  const d2 = dadosTurno2(), X = DADOS.t2 ? derivar(DADOS.t2) : VIVO.X;
+  if (!d2 || !X) {
+    $("#vivo-placar").innerHTML = `<div class="aviso-vivo">A apuração do 2º turno começa às 17h (horário de Brasília) de domingo, 25 de outubro. Esta página lê os resultados do TSE sozinha, a cada minuto: deixe-a aberta e os mapas e gráficos vão se formando.</div>`;
+    ["#vivo-kpis", "#vivo-comp-kpis"].forEach(a => { $(a).innerHTML = ""; });
+    andamentoVivo(); mapaVivo(null); curvaVivo(); compararTurnos(null);
+    return;
+  }
+  const f = d2.candidatos.find(c => c.n === "22"), l = d2.candidatos.find(c => c.n === "13"), Rv = d2.resumo;
+  $("#vivo-placar").innerHTML = placarHTML(f, l, meioPlacar(d2), `Brancos e nulos: ${fmtP(+Rv.p_brancos_nulos)} dos votos`);
+  const concluidos = DADOS.t2 ? TOTAL_LOCAIS : VIVO.finais.size;
+  kpis("#vivo-kpis", [
+    { l: "Seções apuradas", v: fmtP(pstNum(d2.status.pst), 2), d: `de 499.248 seções` },
+    { l: "Comparecimento", v: fmtP(100 * Rv.comparecimento / (Rv.eleitores || 1)), d: `${fmtInt.format(Rv.comparecimento)} votantes nas seções apuradas` },
+    { l: "Abstenção", v: fmtP(+Rv.p_abstencao), d: `1º turno: ${fmtP(+T1.R.p_abstencao)}`, cor: "var(--abst)" },
+    { l: "Brancos e nulos", v: fmtP(+Rv.p_brancos_nulos), d: `1º turno: ${fmtP(+T1.R.p_brancos_nulos)}` },
+    { l: "Locais com apuração concluída", v: fmtInt.format(concluidos), d: `de ${fmtInt.format(TOTAL_LOCAIS)} municípios e cidades no exterior` },
+  ]);
+  andamentoVivo(); mapaVivo(X); curvaVivo(); compararTurnos(X);
+}
+function mapaVivo(X) {
+  const isMun = estadoVivo.nivel === "mun", ind = estadoVivo.ind, esc = escala(ind);
+  const r = desenhaMapa("#vivo-mapa", isMun ? G.mun : G.uf, {
+    getObj: id => X ? (isMun ? X.MUN_IDX.get(id) : X.UF_IDX.get(id)) : null,
+    cor: o => corPor(ind, o, esc),
+    tip: o => tipLocal(o, isMun ? `${o.nome} (${o.uf})` : o.nome, `${fmtP((isMun ? pstMunicipio(o.ibge) : pstUF(o.uf)) || 0, 0)} das seções apuradas`),
+    classe: isMun ? "" : "uf", contorno: isMun ? UF_GEO_MERGE : null,
+  });
+  r.feats.attr("fill-opacity", f => { const p = isMun ? pstMunicipio(f.properties.id) : pstUF(f.properties.id); return p != null && p > 0 && p < 100 ? .45 : 1; });
+  legenda("#vivo-leg", ind, esc);
+}
+function andamentoVivo() {
+  const nomes = new Map(DADOS.t1.ufs.map(u => [u.uf.toLowerCase(), u.uf === "ZZ" ? "Exterior" : u.nome]));
+  const linhas = BASE.ufs_cfg.map(([sg]) => ({ nome: nomes.get(sg), p: DADOS.t2 ? 100 : pstUF(sg) || 0 })).sort((a, b) => b.p - a.p || a.nome.localeCompare(b.nome, "pt-BR"));
+  $("#vivo-andamento").innerHTML = linhas.map(x => `<div class="linha-barra"><span>${x.nome}</span><div class="trilho"><div style="width:${x.p}%;background:var(--accent)"></div></div><span class="p">${fmtP(x.p, x.p === 100 || x.p === 0 ? 0 : 1)}</span></div>`).join("");
+}
+function curvaVivo() {
+  const box = $("#vivo-curva"); box.innerHTML = "";
+  const pts = VIVO.curva;
+  if (DADOS.t2 && pts.length < 2) { box.innerHTML = `<div class="aviso-vivo">A curva da apuração só é registrada enquanto a página acompanha a apuração ao vivo.</div>`; return; }
+  if (pts.length < 2) { box.innerHTML = `<div class="aviso-vivo">A curva aparece depois das primeiras leituras da apuração.</div>`; return; }
+  const W = 1160, H = 300, ml = 44, mr = 120, mt = 14, mb = 34;
+  const vals = pts.flatMap(d => [d.l, d.f]);
+  const y = d3.scaleLinear([Math.min(45, d3.min(vals) - 1), Math.max(55, d3.max(vals) + 1)], [H - mb, mt]).nice();
+  const x = d3.scaleLinear([0, 100], [ml, W - mr]);
+  const svg = d3.select(box).append("svg").attr("viewBox", `0 0 ${W} ${H}`).attr("role", "img").attr("aria-label", "Curva da apuração: percentual de cada candidato conforme as seções são apuradas");
+  svg.append("g").attr("class", "grid").selectAll("line").data(y.ticks(6)).join("line").attr("x1", ml).attr("x2", W - mr).attr("y1", y).attr("y2", y);
+  svg.append("line").attr("x1", ml).attr("x2", W - mr).attr("y1", y(50)).attr("y2", y(50)).attr("stroke", css("--muted")).attr("stroke-dasharray", "4 4");
+  svg.append("text").attr("x", W - mr + 6).attr("y", y(50) + 4).text("50%");
+  svg.append("g").attr("class", "eixo").attr("transform", `translate(0,${H - mb})`).call(d3.axisBottom(x).ticks(10).tickFormat(v => v + "%").tickSizeOuter(0));
+  svg.append("g").attr("class", "eixo").attr("transform", `translate(${ml},0)`).call(d3.axisLeft(y).ticks(6).tickFormat(v => v + "%").tickSize(0)).select(".domain").remove();
+  svg.append("text").attr("x", W - mr).attr("y", H - 4).attr("text-anchor", "end").text("seções apuradas →");
+  [["l", "--lula", "Lula"], ["f", "--flavio", "Flávio"]].forEach(([k, cor, nome]) => {
+    svg.append("path").datum(pts).attr("fill", "none").attr("stroke", css(cor)).attr("stroke-width", 2.5).attr("d", d3.line(d => x(d.p), d => y(d[k])));
+    const u = pts[pts.length - 1];
+    svg.append("circle").attr("cx", x(u.p)).attr("cy", y(u[k])).attr("r", 4.5).attr("fill", css(cor));
+    svg.append("text").attr("x", x(u.p) + 8).attr("y", y(u[k]) + 4).attr("class", "rot-forte").text(`${nome} ${fmtP(u[k], 2)}`);
+  });
+  svg.append("rect").attr("x", ml).attr("y", mt).attr("width", W - mr - ml).attr("height", H - mt - mb).attr("fill", "transparent")
+    .on("mousemove", ev => { const px = x.invert(d3.pointer(ev)[0]); const d = d3.least(pts, q => Math.abs(q.p - px));
+      mostrarTip(ev, `<b>${fmtP(d.p, 2)} das seções apuradas</b><div class="muted">${d.h ? "às " + d.h : ""}</div>${linhaTip(css("--lula"), "Lula", fmtP(d.l, 2))}${linhaTip(css("--flavio"), "Flávio", fmtP(d.f, 2))}`); })
+    .on("mouseleave", esconderTip);
+}
+// Do 1º para o 2º turno
+function compararTurnos(X) {
+  const alvos = ["#vivo-mapa-lula", "#vivo-mapa-flavio", "#vivo-terceiros", "#vivo-abst"];
+  if (!X) { alvos.forEach(a => { $(a).innerHTML = `<div class="aviso-vivo">Aparece quando os primeiros resultados chegarem.</div>`; }); $("#vivo-leg-lula").innerHTML = $("#vivo-leg-flavio").innerHTML = $("#vivo-terceiros-nota").textContent = ""; return; }
+  const c1 = n => DADOS.t1.candidatos.find(c => c.n === n).pct, c2 = n => X.D.candidatos.find(c => c.n === n).pct;
+  kpis("#vivo-comp-kpis", [
+    { l: "Lula, % dos válidos", v: `${fmtP(c1("13"))} → ${fmtP(c2("13"))}`, d: fmtPP(c2("13") - c1("13")), cor: "var(--lula)" },
+    { l: "Flávio Bolsonaro, % dos válidos", v: `${fmtP(c1("22"))} → ${fmtP(c2("22"))}`, d: fmtPP(c2("22") - c1("22")), cor: "var(--flavio)" },
+    { l: "Abstenção", v: `${fmtP(+T1.R.p_abstencao)} → ${fmtP(+X.R.p_abstencao)}`, d: fmtPP(X.R.p_abstencao - T1.R.p_abstencao) },
+    { l: "Brancos e nulos", v: `${fmtP(+T1.R.p_brancos_nulos)} → ${fmtP(+X.R.p_brancos_nulos)}`, d: fmtPP(X.R.p_brancos_nulos - T1.R.p_brancos_nulos) },
+  ]);
+  const esc = escala("d_turno");
+  [["#vivo-mapa-lula", "#vivo-leg-lula", "p_lula", "Lula"], ["#vivo-mapa-flavio", "#vivo-leg-flavio", "p_flavio", "Flávio"]].forEach(([alvo, leg, k, nome]) => {
+    desenhaMapa(alvo, G.mun, {
+      W: 800, H: 760,
+      getObj: id => { const m2 = X.MUN_IDX.get(id), m1 = T1.MUN_IDX.get(id); return m2 && m1 ? { ...m2, d: dif(m2[k], m1[k]), v1: m1[k] } : null; },
+      cor: o => o.d == null ? css("--line") : esc.cor(o.d),
+      tip: o => `<b>${o.nome} (${o.uf})</b>${linhaTip(null, `${nome} 1º turno`, fmtP(o.v1))}${linhaTip(null, `${nome} 2º turno`, fmtP(o[k]))}${linhaTip(null, "Variação", fmtPP(o.d))}`,
+      contorno: UF_GEO_MERGE,
+    });
+    legenda(leg, "d_turno", esc, `Variação de ${nome} do 1º para o 2º turno (p.p. dos válidos)`);
+  });
+  // Dispersão: % de terceiros no 1º turno × diferença de crescimento entre Flávio e Lula
+  const pts = X.MUN.map(m2 => { const m1 = T1.MUN_IDX.get(m2.ibge); if (!m1 || m2.p_lula == null) return null;
+    const gF = m2.p_flavio - m1.p_flavio, gL = m2.p_lula - m1.p_lula; return { ...m2, terc: 100 - m1.p_flavio - m1.p_lula, gF, gL, saldo: gF - gL }; }).filter(Boolean);
+  const box = $("#vivo-terceiros"); box.innerHTML = "";
+  if (pts.length < 10) { box.innerHTML = `<div class="aviso-vivo">Aparece quando houver municípios apurados suficientes.</div>`; return; }
+  const W = 640, H = 380, ml = 50, mb = 36, mt = 12, mr = 12;
+  const x = d3.scaleLinear([0, Math.max(20, d3.quantile(pts.map(d => d.terc).sort(d3.ascending), .99))], [ml, W - mr]).clamp(true);
+  const ext = Math.max(10, d3.quantile(pts.map(d => Math.abs(d.saldo)).sort(d3.ascending), .99));
+  const y = d3.scaleLinear([-ext, ext], [H - mb, mt]).clamp(true).nice();
+  const rr = d3.scaleSqrt([0, d3.max(pts, d => d.eleitores)], [1, 14]);
+  const svg = d3.select(box).append("svg").attr("viewBox", `0 0 ${W} ${H}`).attr("role", "img").attr("aria-label", "Votos em terceiros no 1º turno e crescimento de cada candidato");
+  svg.append("g").attr("class", "grid").selectAll("line").data(y.ticks(6)).join("line").attr("x1", ml).attr("x2", W - mr).attr("y1", y).attr("y2", y);
+  svg.append("line").attr("x1", ml).attr("x2", W - mr).attr("y1", y(0)).attr("y2", y(0)).attr("stroke", css("--line-strong"));
+  svg.append("g").attr("class", "eixo").attr("transform", `translate(0,${H - mb})`).call(d3.axisBottom(x).ticks(6).tickFormat(v => v + "%").tickSizeOuter(0));
+  svg.append("g").attr("class", "eixo").attr("transform", `translate(${ml},0)`).call(d3.axisLeft(y).ticks(6).tickFormat(v => (v > 0 ? "+" : "") + v).tickSize(0)).select(".domain").remove();
+  svg.append("text").attr("x", W - mr).attr("y", H - 4).attr("text-anchor", "end").text("% de votos em terceiros no 1º turno →");
+  svg.append("text").attr("x", ml + 6).attr("y", mt + 12).text("↑ Flávio cresceu mais");
+  svg.append("text").attr("x", ml + 6).attr("y", H - mb - 8).text("↓ Lula cresceu mais");
+  svg.append("g").selectAll("circle").data(pts.sort((a, b) => b.eleitores - a.eleitores)).join("circle")
+    .attr("cx", d => x(d.terc)).attr("cy", d => y(d.saldo)).attr("r", d => rr(d.eleitores))
+    .attr("fill", d => d.saldo > 0 ? css("--flavio") : css("--lula")).attr("fill-opacity", .4).attr("stroke", css("--surface")).attr("stroke-width", .4)
+    .on("mousemove", (ev, d) => mostrarTip(ev, `<b>${d.nome} (${d.uf})</b>${linhaTip(null, "Terceiros no 1º turno", fmtP(d.terc))}${linhaTip(css("--flavio"), "Flávio cresceu", fmtPP(d.gF))}${linhaTip(css("--lula"), "Lula cresceu", fmtPP(d.gL))}`))
+    .on("mouseleave", esconderTip);
+  const fr = v => v.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const rF = pearson(pts.map(d => d.terc), pts.map(d => d.gF)), rL = pearson(pts.map(d => d.terc), pts.map(d => d.gL));
+  $("#vivo-terceiros-nota").textContent = `Cada círculo é um município (${fmtInt.format(pts.length)} com resultados, mesmo que parciais). Eixo vertical: crescimento de Flávio menos crescimento de Lula entre os turnos, em p.p. Correlação entre o voto em terceiros no 1º turno e o crescimento: Flávio r = ${fr(rF)}; Lula r = ${fr(rL)}. Isso é uma associação entre municípios, não mostra o que cada eleitor fez (falácia ecológica).`;
+  barrasComparadas("#vivo-abst", X.UFS.filter(u => u.p_abstencao != null).sort((a, b) => b.p_abstencao - a.p_abstencao).map(u => {
+    const u1 = T1.UF_IDX.get(u.uf); return { rot: u.nome, v26: u.p_abstencao, v22: u1.p_abstencao, tip: `<b>${u.nome}</b>${linhaTip(css("--abst"), "2º turno", fmtP(u.p_abstencao))}${linhaTip(null, "1º turno", fmtP(u1.p_abstencao))}${linhaTip(null, "Variação", fmtPP(u.p_abstencao - u1.p_abstencao))}` };
+  }), { dom: [0, 35], ml: 150, lh: 22, rot26: "2º turno", rot22: "1º turno" });
 }
 
 /* ---------- visão geral ---------- */
 function geral() {
   const val = R.validos, comp = R.comparecimento;
   kpis("#kpis-geral", [
-    { l: "Eleitores aptos", v: fmtMi(R.eleitores), d: fmtInt.format(R.eleitores) },
+    { l: TURNO === 2 && !D.status.final ? "Aptos nas seções apuradas" : "Eleitores aptos", v: fmtMi(R.eleitores), d: fmtInt.format(R.eleitores) },
     { l: "Comparecimento", v: fmtP(100 * comp / R.eleitores), d: `${fmtInt.format(comp)} votantes` },
     { l: "Abstenção geral", v: fmtP(+R.p_abstencao), d: `${fmtMi(R.abstencao)} de eleitores · só no Brasil: ${fmtP(ABST_BR)}`, cor: "var(--abst)" },
     { l: "Brancos e nulos", v: fmtP(+R.p_brancos_nulos), d: `brancos ${fmtP(100 * R.brancos / comp)} · nulos ${fmtP(100 * R.nulos / comp)}` },
     { l: "Municípios vencidos", v: `${fmtInt.format(R.mun_flavio)} × ${fmtInt.format(R.mun_lula)}`, d: "Flávio × Lula, de 5.571" },
   ]);
   barrasCandidatos(); regioes(); margemUF();
+  $("#nota-candidatos").textContent = TURNO === 1
+    ? "Percentual sobre os votos válidos (exclui brancos e nulos), critério usado pelo TSE para definir o 2º turno."
+    : "Percentual sobre os votos válidos (exclui brancos e nulos). No 2º turno, é eleito quem tiver mais da metade dos votos válidos.";
+  const polos = [...AGG_REG].filter(([, o]) => o.p_lula != null).sort((a, b) => b[1].p_lula - a[1].p_lula);
+  $("#nota-regioes").textContent = polos.length > 1
+    ? `${polos[0][0]} e ${polos[polos.length - 1][0]} são polos opostos: Lula teve ${fmtP(polos[0][1].p_lula)} no ${polos[0][0]} e ${fmtP(polos[polos.length - 1][1].p_lula)} no ${polos[polos.length - 1][0]}.` : "";
 }
 
 /* ---------- controles e abas ---------- */
@@ -1246,8 +1745,11 @@ seg("#ctl-ext", v => { estadoExt.ind = v; mapaMundo(); });
 seg("#ctl-reg", v => selecionarRegiao(v));
 seg("#ctl-reg-ind", v => { estadoReg.ind = v; mapaReg(); });
 seg("#ctl-comp", v => { estadoComp.ind = v; mapaComp(); });
+seg("#ctl-turno", v => usarTurno(+v));
+seg("#ctl-vivo-nivel", v => { estadoVivo.nivel = v; mapaVivo(DADOS.t2 ? derivar(DADOS.t2) : VIVO.X); });
+seg("#ctl-vivo-ind", v => { estadoVivo.ind = v; mapaVivo(DADOS.t2 ? derivar(DADOS.t2) : VIVO.X); });
 
-const RENDER = { geral, mapa: () => { mapaBR(); estadoMapa.sel ? detalheBR(estadoMapa.sel) : detalheBRPadrao(); tabelasBR(); }, regiao: () => { marcarSeg("#ctl-reg", estadoReg.reg); regiao(); }, estado, abstencao, exterior, comparar, sobre: () => {} };
+const RENDER = { geral, aovivo, mapa: () => { mapaBR(); estadoMapa.sel ? detalheBR(estadoMapa.sel) : detalheBRPadrao(); tabelasBR(); }, regiao: () => { marcarSeg("#ctl-reg", estadoReg.reg); regiao(); }, estado, abstencao, exterior, comparar, sobre: () => {} };
 const feitos = new Set();
 let abaAtual = "geral";
 function abrir(aba, render = true) {
@@ -1271,5 +1773,16 @@ initBusca();
 initSeletorUF();
 let inicial = location.hash.slice(1);
 if (!inicial) { try { inicial = localStorage.getItem("aba") || "geral"; } catch (e) { inicial = "geral"; } }
+let turnoSalvo = 1;
+try { turnoSalvo = +(localStorage.getItem("turno") || 1); } catch (e) {}
+if (DADOS.t2) { VIVO.d2 = DADOS.t2; VIVO.X = derivar(DADOS.t2); VIVO.estado = DADOS.t2.status.final ? "encerrada" : "apurando"; }
+liberarTurno2();
+if (turnoSalvo === 2 && DADOS.t2) usarTurno(2);
 abrir(inicial);
+// Acompanhamento ao vivo do 2º turno enquanto não houver resultado final gravado no painel
+if (!(DADOS.t2 && DADOS.t2.status.final)) {
+  carregarCurva();
+  cicloVivo().then(() => { if (turnoSalvo === 2 && TURNO !== 2 && dadosTurno2()) usarTurno(2); });
+  document.addEventListener("visibilitychange", () => { if (!document.hidden) { cicloVivo(); if (!VIVO.rastreando && VIVO.estado !== "aguardando") rastrearMunicipios(); } });
+} else { mostrarStatusVivo(); }
 </script>
