@@ -70,6 +70,10 @@ header.top { padding-block: 28px 18px; display: grid; gap: 18px; }
 .titulo { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px 24px; }
 .titulo h1 { font-size: clamp(1.7rem, 4vw, 2.6rem); font-weight: 800; font-stretch: 78%; letter-spacing: -.015em; line-height: 1.05; }
 .titulo .fonte { font-size: .8rem; color: var(--muted); }
+.marca { display: flex; align-items: center; gap: 18px; min-width: 0; }
+/* Logo branca com transparência: usada como máscara, assume a cor do texto no tema claro e no escuro */
+.logo { flex: none; width: 104px; height: 65px; background: var(--ink);
+  -webkit-mask: url("__LOGO__") center / contain no-repeat; mask: url("__LOGO__") center / contain no-repeat; }
 .placar { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 18px 20px; display: grid; gap: 12px; box-shadow: var(--shadow); }
 .placar-nomes { display: flex; justify-content: space-between; gap: 16px; align-items: end; }
 .cand-hero { display: grid; gap: 2px; min-width: 0; }
@@ -210,6 +214,8 @@ select { font: 500 .9rem var(--f-body); padding: 7px 10px; border: 1px solid var
   .titulo { display: grid; gap: 8px; }
   .titulo .eyebrow { font-size: .6rem; letter-spacing: .06em; }
   .titulo h1 { font-size: 1.4rem; }
+  .marca { gap: 12px; }
+  .logo { width: 72px; height: 45px; }
   .turno-box { grid-auto-flow: column; justify-content: space-between; align-items: center; justify-items: start; gap: 8px; }
   .turno-box .fonte { display: none; }   /* a fonte continua no rodapé */
   header.top .cand-hero .sub { display: none; }   /* no topo, fica só a diferença de votos */
@@ -286,9 +292,12 @@ footer a:hover, .contato a:hover { color: var(--accent); }
 <div class="wrap">
   <header class="top">
     <div class="titulo">
-      <div>
-        <div class="eyebrow">LADRI · Laboratório de Dados e Relações Internacionais · ASCES-UNITA</div>
-        <h1>Eleições 2026 · <span id="h1-turno">1º turno</span> presidencial</h1>
+      <div class="marca">
+        <span class="logo" role="img" aria-label="Logo do LADRI"></span>
+        <div>
+          <div class="eyebrow">LADRI · Laboratório de Dados e Relações Internacionais · ASCES-UNITA</div>
+          <h1>Eleições 2026 · <span id="h1-turno">1º turno</span> presidencial</h1>
+        </div>
       </div>
       <div class="turno-box">
         <div class="seg" id="ctl-turno" role="group" aria-label="Turno exibido nas abas">

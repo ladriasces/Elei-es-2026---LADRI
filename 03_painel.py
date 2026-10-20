@@ -5,6 +5,7 @@ processados e as malhas geográficas simplificadas (para o painel abrir rápido 
 from __future__ import annotations
 
 import argparse
+import base64
 import json
 
 import geopandas as gpd
@@ -206,7 +207,8 @@ def main(forcar_2t: bool = False) -> None:
     }
 
     texto = json.dumps(dados, ensure_ascii=False, separators=(",", ":"))
-    html = (PAINEL / "template.html").read_text(encoding="utf-8").replace("/*__DADOS__*/null", texto)
+    logo = base64.b64encode((PAINEL / "logo_ladri.png").read_bytes()).decode("ascii")
+    html = (PAINEL / "template.html").read_text(encoding="utf-8").replace("/*__DADOS__*/null", texto)         .replace("__LOGO__", f"data:image/png;base64,{logo}")
     (PAINEL / "index.html").write_text(html, encoding="utf-8")
     print(f"painel/index.html gerado: {len(html.encode('utf-8')) / 1e6:.2f} MB "
           f"(dados {len(texto.encode('utf-8')) / 1e6:.2f} MB)")
