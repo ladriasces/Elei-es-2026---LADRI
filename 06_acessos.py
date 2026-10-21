@@ -9,7 +9,7 @@ salva, na pasta relatorios/ (fora do GitHub):
   - acessos_por_hora.csv     visitantes por hora
   - dados/acessos_AAAA-MM-DD.json   resposta bruta da API (registro do dia em que rodou)
 
-Chave da API: crie em https://ladri-eleicoes.goatcounter.com → Settings → API (permissão
+Chave da API: crie em https://ladri.goatcounter.com → Settings → API (permissão
 "Read statistics") e salve no arquivo .goatcounter_token, na raiz do projeto, ou na variável
 de ambiente GOATCOUNTER_TOKEN.
 

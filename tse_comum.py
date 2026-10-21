@@ -19,7 +19,7 @@ BASE_TSE = "https://resultados.tse.jus.br/oficial"
 ELEICOES = {1: "6257", 2: "6258"}
 CARGO = "c0001"  # Presidente
 # Contador de acessos do site no GitHub Pages (GoatCounter: anônimo, sem cookies). Relatório: python 06_acessos.py
-GOATCOUNTER = "ladri-eleicoes"
+GOATCOUNTER = "ladri"
 
 # Candidatos destacados; os demais viram "Outros"
 PRINCIPAIS = {"22": "flavio", "13": "lula", "70": "cury", "14": "renan", "55": "caiado"}
