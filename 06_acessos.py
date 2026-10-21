@@ -39,9 +39,8 @@ INICIO_CONTAGEM = "2026-10-21"   # dia em que o contador foi colocado no site
 SAIDA = RAIZ / "relatorios"
 TOKEN_ARQ = RAIZ / ".goatcounter_token"
 
-TELAS = {"Phones": "Celulares", "Large phones, small tablets": "Celulares grandes e tablets pequenos",
-         "Tablets and small laptops": "Tablets e notebooks pequenos", "Computer monitors": "Computadores",
-         "Computer monitors larger than HD": "Computadores (telas grandes)", "(unknown)": "Não identificado"}
+TELAS = {"phone": "Celulares", "largephone": "Celulares grandes e tablets pequenos", "tablet": "Tablets e notebooks pequenos",
+         "desktop": "Computadores", "desktophd": "Computadores (telas grandes)", "unknown": "Não identificado"}
 PAISES = {"Brazil": "Brasil", "United States": "Estados Unidos", "Japan": "Japão", "Germany": "Alemanha",
           "United Kingdom": "Reino Unido", "Spain": "Espanha", "France": "França", "Italy": "Itália",
           "Canada": "Canadá", "Ireland": "Irlanda", "Switzerland": "Suíça", "Netherlands": "Países Baixos",
@@ -69,8 +68,8 @@ def buscar(caminho: str, token: str, **params) -> dict:
                 time.sleep(0.3)   # limite da API: 4 requisições por segundo
                 return json.load(r)
         except urllib.error.HTTPError as e:
-            if e.code == 429 and tentativa < 2:
-                time.sleep(2)
+            if e.code in (404, 429, 500, 502, 503) and tentativa < 2:   # erros passageiros da API
+                time.sleep(3)
                 continue
             if e.code in (401, 403):
                 sys.exit(f"A API do GoatCounter recusou a chave ({e.code}). Confira o arquivo {TOKEN_ARQ.name}.")
@@ -135,9 +134,11 @@ def tabela(titulo: str, linhas: list[tuple[str, int]], vazio: str = "Sem dados a
 def stats_lista(d: dict, traduz: dict | None = None) -> list[tuple[str, int]]:
     out = []
     for s in d.get("stats") or []:
-        nome = s.get("name") or ""
-        nome = (traduz or {}).get(nome, nome) or "Não identificado"
-        out.append((nome, int(s.get("count") or 0)))
+        n = int(s.get("count") or 0)
+        if not n:
+            continue
+        nome = s.get("name") or s.get("id") or ""   # tamanhos de tela vêm só com o id (phone, desktop...)
+        out.append(((traduz or {}).get(nome, nome) or "Não identificado", n))
     return out
 
 
@@ -147,7 +148,16 @@ def gerar(dados: dict) -> None:
     hoje = date.today().isoformat()
     (SAIDA / "dados" / f"acessos_{hoje}.json").write_text(json.dumps(dados, ensure_ascii=False, indent=1), encoding="utf-8")
 
-    dias = [(s["day"], int(s.get("daily") or 0), s.get("hourly") or []) for s in dados["total"].get("stats") or []]
+    # Visitantes por dia e por hora: soma das páginas, sem os eventos (cliques nas abas)
+    paginas = [h for h in dados["hits"].get("hits") or [] if not h.get("event")]
+    por_dia: dict[str, list] = {s["day"]: [0, [0] * 24] for s in dados["total"].get("stats") or []}
+    for h in paginas:
+        for st in h.get("stats") or []:
+            d = por_dia.setdefault(st["day"], [0, [0] * 24])
+            d[0] += int(st.get("daily") or 0)
+            for i, v in enumerate((st.get("hourly") or [])[:24]):
+                d[1][i] += int(v or 0)
+    dias = [(d, v, hs) for d, (v, hs) in sorted(por_dia.items())]
     with open(SAIDA / "acessos_diarios.csv", "w", newline="", encoding="utf-8") as f:
         w = csv.writer(f)
         w.writerow(["dia", "visitantes"])
@@ -157,7 +167,7 @@ def gerar(dados: dict) -> None:
         w.writerow(["dia", "hora", "visitantes"])
         w.writerows((d, h, v) for d, _, hs in dias for h, v in enumerate(hs))
 
-    total = int(dados["total"].get("total") or 0) - int(dados["total"].get("total_events") or 0)
+    total = sum(int(h.get("count") or 0) for h in paginas)
     com_visita = [x for x in dias if x[1] > 0]
     pico = max(dias, key=lambda x: x[1]) if com_visita else None
     media = total / len(dias) if dias else 0
@@ -179,7 +189,7 @@ def gerar(dados: dict) -> None:
                      f'{barras_svg([f"{h}h" for h in range(24)], [int(v) for v in pico[2]], 2)}</div>')
 
     logo = base64.b64encode((RAIZ / "painel" / "logo_ladri.png").read_bytes()).decode("ascii")
-    ini, fim = dados["periodo"]["start"][:10], dados["periodo"]["end"][:10]
+    ini, fim = (dias[0][0] if dias else dados["periodo"]["start"][:10]), hoje
     kpi = lambda rot, val, det="": f'<div class="kpi"><div class="rot">{rot}</div><div class="val">{val}</div><div class="det">{det}</div></div>'
     pagina = f"""<!doctype html>
 <html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
@@ -241,5 +251,8 @@ if __name__ == "__main__":
     ap = argparse.ArgumentParser(description="Relatório de acessos do site (GoatCounter).")
     ap.add_argument("--inicio", default=INICIO_CONTAGEM, help="data inicial AAAA-MM-DD (padrão: início da contagem)")
     args = ap.parse_args()
+    # Período em horário local (meia-noite do dia inicial até a próxima hora cheia), enviado em UTC
+    inicio = datetime.strptime(args.inicio, "%Y-%m-%d").astimezone(timezone.utc)
     agora = datetime.now(timezone.utc).replace(minute=0, second=0, microsecond=0) + timedelta(hours=1)
-    gerar(coletar(ler_token(), f"{args.inicio}T00:00:00Z", agora.strftime("%Y-%m-%dT%H:%M:%SZ")))
+    utc = "%Y-%m-%dT%H:%M:%SZ"
+    gerar(coletar(ler_token(), inicio.strftime(utc), agora.strftime(utc)))
