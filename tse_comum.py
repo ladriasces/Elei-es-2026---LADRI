@@ -1,5 +1,5 @@
 """
-tse_comum.py — Funções e constantes usadas por 01_coleta.py, 02_tratamento.py e 03_painel.py.
+tse_comum.py — Funções e constantes usadas por 01_coleta.py, 02_tratamento.py, 03_painel.py e 06_acessos.py.
 
 Turnos de 2026 (cargo Presidente):
   1º turno: eleição 6257 (4/10/2026)
@@ -18,6 +18,8 @@ RAW = RAIZ / "data" / "raw"
 BASE_TSE = "https://resultados.tse.jus.br/oficial"
 ELEICOES = {1: "6257", 2: "6258"}
 CARGO = "c0001"  # Presidente
+# Contador de acessos do site no GitHub Pages (GoatCounter: anônimo, sem cookies). Relatório: python 06_acessos.py
+GOATCOUNTER = "ladri-eleicoes"
 
 # Candidatos destacados; os demais viram "Outros"
 PRINCIPAIS = {"22": "flavio", "13": "lula", "70": "cury", "14": "renan", "55": "caiado"}

@@ -54,6 +54,16 @@ Os dados brutos (~690 MB, incluindo o arquivo de 2022 do [Portal de Dados Aberto
 
 Para só explorar os dados, não é preciso rodar a coleta: o notebook usa as tabelas de `data/processed/` e baixa sozinho os poucos arquivos brutos de que precisa.
 
+## Contagem de acessos
+
+O site do GitHub Pages conta os acessos de forma anônima com o [GoatCounter](https://www.goatcounter.com) (sem cookies e sem dados pessoais), incluindo quais abas são abertas. Para gerar o relatório (`relatorios/relatorio_acessos.html` e CSVs por dia e por hora, que ficam só no computador):
+
+```
+python 06_acessos.py
+```
+
+O script lê a chave da API do GoatCounter do arquivo `.goatcounter_token` (fora do repositório) ou da variável `GOATCOUNTER_TOKEN`.
+
 ## Fontes
 
 - **Resultados 2026:** API pública de divulgação de resultados do TSE (`resultados.tse.jus.br`), eleições 6257 (1º turno) e 6258 (2º turno), cargo Presidente. Um arquivo por município (5.571) e por cidade no exterior (186).
@@ -80,6 +90,7 @@ tse_comum.py               funções e constantes comuns (leitura do TSE, 2022, 
 01_coleta.py               coleta (TSE + IBGE)
 02_tratamento.py           tratamento e junções
 03_painel.py               gera o painel a partir de painel/template.html
+06_acessos.py              relatório de acessos do site (GoatCounter)
 exterior_paises.py         cidade no exterior -> país/continente
 analise_eleicoes_2026.ipynb  notebook didático
 data/processed/            tabelas tratadas

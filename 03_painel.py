@@ -14,7 +14,7 @@ import shapely
 from shapely.geometry import MultiPolygon, Polygon
 from shapely.geometry.polygon import orient
 
-from tse_comum import RAIZ, RAW, carregar_2022, carregar_abstencao_2022, pasta_saida, pasta_tse
+from tse_comum import GOATCOUNTER, RAIZ, RAW, carregar_2022, carregar_abstencao_2022, pasta_saida, pasta_tse
 
 PAINEL = RAIZ / "painel"
 
@@ -231,6 +231,7 @@ def site_github(html: str) -> None:
 <meta name="description" content="Painel interativo da eleição presidencial de 2026 (TSE): 1º e 2º turnos, apuração ao vivo, resultados por estado e município, voto no exterior e comparação com 2022. LADRI · ASCES-UNITA.">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%231d7a3d'/%3E%3Cpath d='M9 17l5 5 9-11' stroke='white' stroke-width='3.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
 <style>[hidden] {{ display: none !important; }} img {{ max-width: 100%; }}</style>
+<script data-goatcounter="https://{GOATCOUNTER}.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>
 {cabeca}
 </head>
 <body>

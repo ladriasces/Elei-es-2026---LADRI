@@ -24,3 +24,7 @@ desktop.ini
 
 # Simulador da apuração (somente testes locais)
 simulador_2t.py
+
+# Relatórios de acesso e chave da API do GoatCounter (ficam só no computador do LADRI)
+relatorios/
+.goatcounter_token

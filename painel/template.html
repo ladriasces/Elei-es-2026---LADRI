@@ -713,6 +713,8 @@ a:hover > .ico { transform: translateY(-2px); }
           <li>O país de cada cidade no exterior foi atribuído manualmente, pois o TSE informa só a cidade-sede da seção.</li>
           <li>Os totais foram conferidos: a soma de municípios e exterior é igual ao total nacional divulgado pelo TSE.</li>
         </ul>
+        <h3>Contagem de acessos</h3>
+        <p>O site conta os acessos de forma anônima, com o <a href="https://www.goatcounter.com" target="_blank" rel="noopener">GoatCounter</a>: sem cookies e sem guardar dados pessoais dos visitantes. Os números servem só para o LADRI acompanhar o alcance da plataforma.</p>
         <h3>Como esta plataforma foi feita</h3>
         <p>Esta plataforma foi desenvolvida pelo LADRI com o auxílio do <b>Claude</b>, assistente de inteligência artificial da Anthropic. O Claude ajudou a escrever o código de coleta, tratamento e análise dos dados, o painel interativo, o notebook e as visualizações. A definição dos recortes e a revisão do conteúdo foram feitas pela equipe do LADRI, e os totais foram conferidos com os números oficiais divulgados pelo TSE.</p>
       </div>
@@ -1999,7 +2001,11 @@ function abrir(aba, render = true) {
   try { history.replaceState(null, "", "#" + aba); } catch (e) {}
   try { localStorage.setItem("aba", aba); } catch (e) {}
 }
-document.querySelectorAll("nav.abas button").forEach(b => b.addEventListener("click", () => abrir(b.dataset.aba)));
+document.querySelectorAll("nav.abas button").forEach(b => b.addEventListener("click", () => { abrir(b.dataset.aba); contarAba(b); }));
+// Contador de acessos (só no site do GitHub, onde o GoatCounter é carregado): registra as abas abertas
+function contarAba(b) {
+  try { window.goatcounter && window.goatcounter.count && window.goatcounter.count({ path: "aba-" + b.dataset.aba, title: b.textContent.trim(), event: true }); } catch (e) {}
+}
 
 // Re-renderiza ao trocar o tema (as cores vêm das variáveis CSS)
 function rerender() { feitos.clear(); placar(); abrir(abaAtual); }
