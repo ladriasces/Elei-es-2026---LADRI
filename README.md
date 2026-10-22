@@ -42,7 +42,6 @@ A aba também traz análises próprias do LADRI, calculadas ao vivo:
 - **O que falta para virar:** diferença atual, eleitores aptos em seções não apuradas e o percentual dos votos válidos restantes de que o segundo colocado precisaria. "Decidido" só aparece quando a diferença supera todos os eleitores que faltam (aritmética pura); o total de votos válidos restantes é a única estimativa (eleitores que faltam × taxa de votos válidos de cada estado).
 - **Comparação justa (mesmos locais):** o 2º turno comparado com o 1º turno e com o 2º turno de 2022 no mesmo eleitorado já apurado. Cada município (ou país) entra na conta antiga com peso igual à fração do seu eleitorado do 2º turno já apurada. Mostra também o efeito da ordem da apuração.
 - **Municípios que viraram:** em relação ao 1º turno e ao 2º turno de 2022, com mapa e lista dos maiores.
-- **Pernambuco, Agreste e Caruaru:** resultado ao vivo com as mesmas comparações.
 - **Imagem para o Instagram:** post (1:1) ou stories (9:16) com o placar do momento, gerada no navegador.
 
 Essas análises foram conferidas com um validador independente em Python (2º turno simulado, 1º turno dos arquivos brutos do TSE e 2022 direto dos zips do Portal de Dados Abertos): 210 valores idênticos com a apuração parcial e 166 com a apuração completa.
