@@ -184,7 +184,10 @@ select { font: 500 .9rem var(--f-body); padding: 7px 10px; border: 1px solid var
 
 /* Seletor de turno, faixa de dados parciais e aba ao vivo */
 .turno-box { display: grid; gap: 6px; justify-items: end; }
-#ctl-turno button { font-weight: 600; padding: 6px 14px; }
+#ctl-turno button, #ctl-sobre button { font-weight: 600; padding: 6px 14px; }
+.seletores { display: flex; flex-wrap: wrap; gap: 8px; justify-content: end; }
+/* Dados e método fica fora dos turnos: sem placar e sem a faixa de abas */
+body.modo-sobre #placar, body.modo-sobre nav.abas, body.modo-sobre .turno-box .fonte { display: none; }
 #ctl-turno button[disabled] { opacity: .45; cursor: not-allowed; }
 .faixa { margin-top: 10px; padding: 8px 12px; border-radius: 8px; background: color-mix(in srgb, var(--caiado) 16%, var(--surface)); border: 1px solid color-mix(in srgb, var(--caiado) 45%, var(--line)); font-size: .86rem; }
 .ponto-vivo { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--lula); margin-right: 6px; vertical-align: 1px; }
@@ -220,7 +223,8 @@ select { font: 500 .9rem var(--f-body); padding: 7px 10px; border: 1px solid var
   .turno-box .fonte { display: none; }   /* a fonte continua no rodapé */
   header.top .cand-hero .sub { display: none; }   /* no topo, fica só a diferença de votos */
   .kpis > .kpi:last-child:nth-child(odd) { grid-column: 1 / -1; }
-  #ctl-turno button { padding: 6px 12px; min-height: 36px; }
+  #ctl-turno button, #ctl-sobre button { padding: 6px 12px; min-height: 36px; }
+  .seletores { justify-content: start; }
   .placar { padding: 12px 14px; gap: 8px; }
   .cand-hero .pct { font-size: 2.1rem; }
   .cand-hero .nm { font-size: .88rem; }
@@ -307,8 +311,11 @@ a:hover > .ico { transform: translateY(-2px); }
         </div>
       </div>
       <div class="turno-box">
-        <div class="seg" id="ctl-turno" role="group" aria-label="Turno exibido nas abas">
-          <button data-v="1" aria-pressed="true">1º turno</button><button data-v="2" aria-pressed="false">2º turno</button>
+        <div class="seletores">
+          <div class="seg" id="ctl-turno" role="group" aria-label="Turno exibido nas abas">
+            <button data-v="1" aria-pressed="true">1º turno</button><button data-v="2" aria-pressed="false">2º turno</button>
+          </div>
+          <div class="seg" id="ctl-sobre"><button data-v="sobre" aria-pressed="false">Dados e método</button></div>
         </div>
         <div class="fonte" id="fonte-data"></div>
       </div>
@@ -326,7 +333,6 @@ a:hover > .ico { transform: translateY(-2px); }
       <button role="tab" data-aba="abstencao" aria-selected="false">Abstenção</button>
       <button role="tab" data-aba="exterior" aria-selected="false">Brasileiros no exterior</button>
       <button role="tab" data-aba="comparar" aria-selected="false">2022 × 2026</button>
-      <button role="tab" data-aba="sobre" aria-selected="false">Dados e método</button>
     </div>
     <div class="faixa" id="faixa-parcial" hidden></div>
   </nav>
@@ -1768,7 +1774,7 @@ function usarTurno(t, navegar = true) {
   try { localStorage.setItem("turno", String(t)); } catch (e) {}
   if (!navegar) return;
   if (t === 2) abrir("aovivo");
-  else abrir(abaAtual === "aovivo" ? "geral" : abaAtual);
+  else { const volta = abaAtual === "sobre" ? ultimaAba : abaAtual; abrir(volta === "aovivo" ? "geral" : volta); }
 }
 
 /* ---------- aba "2º turno ao vivo" ---------- */
@@ -1979,16 +1985,22 @@ seg("#ctl-reg", v => selecionarRegiao(v));
 seg("#ctl-reg-ind", v => { estadoReg.ind = v; mapaReg(); });
 seg("#ctl-comp", v => { estadoComp.ind = v; mapaComp(); });
 seg("#ctl-turno", v => usarTurno(+v));
+seg("#ctl-sobre", () => abrir("sobre"));
 seg("#ctl-vivo-nivel", v => { estadoVivo.nivel = v; mapaVivo(DADOS.t2 ? derivar(DADOS.t2) : VIVO.X); });
 seg("#ctl-vivo-ind", v => { estadoVivo.ind = v; mapaVivo(DADOS.t2 ? derivar(DADOS.t2) : VIVO.X); });
 
 const RENDER = { geral, aovivo, mapa: () => { mapaBR(); estadoMapa.sel ? detalheBR(estadoMapa.sel) : detalheBRPadrao(); tabelasBR(); }, regiao: () => { marcarSeg("#ctl-reg", estadoReg.reg); regiao(); }, estado, abstencao, exterior, comparar, sobre: () => {} };
 const feitos = new Set();
-let abaAtual = "geral";
+let abaAtual = "geral", ultimaAba = "geral";   // ultimaAba: aba do turno para onde se volta ao sair de Dados e método
 function abrir(aba, render = true) {
   if (!RENDER[aba]) aba = "geral";
   if (aba === "aovivo" && TURNO !== 2) usarTurno(2, false);   // links antigos para #aovivo
   abaAtual = aba;
+  if (aba !== "sobre") ultimaAba = aba;
+  // Dados e método fica ao lado do seletor de turno, fora das abas de cada turno
+  document.body.classList.toggle("modo-sobre", aba === "sobre");
+  marcarSeg("#ctl-sobre", aba === "sobre" ? "sobre" : "");
+  marcarSeg("#ctl-turno", aba === "sobre" ? "" : String(TURNO));
   document.querySelectorAll("nav.abas button").forEach(b => b.setAttribute("aria-selected", b.dataset.aba === aba ? "true" : "false"));
   document.querySelectorAll("section.aba").forEach(s => s.hidden = s.id !== "aba-" + aba);
   if (CELULAR.matches) {   // celular: traz a aba escolhida para o meio da faixa de abas
