@@ -2209,6 +2209,8 @@ function viradasVivo(X) {
 // 7. Imagem para o Instagram (post 1:1 ou stories 9:16), desenhada em canvas
 const LOGO_SRC = "__LOGO__";
 function botoesImagem(ativo) { document.querySelectorAll("#ctl-img button").forEach(b => { b.disabled = !ativo; }); }
+// Dentro de outra página (painel no claude.ai) o navegador não deixa baixar arquivos: o botão fica só no site
+if (window.self !== window.top) document.querySelector(".compartilhar").style.display = "none";
 async function desenharImagem(formato) {
   const X = DADOS.t2 ? derivar(DADOS.t2) : VIVO.X, d2 = dadosTurno2();
   if (!X || !d2) return null;
