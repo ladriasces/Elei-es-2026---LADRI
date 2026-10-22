@@ -209,6 +209,21 @@ body.modo-sobre #placar, body.modo-sobre nav.abas, body.modo-sobre .turno-box .f
 .aba .aviso-turno { display: none; }
 .aba.sem-dados .aviso-turno { display: block; }
 .aba.sem-dados > :not(.aviso-turno) { display: none !important; }
+.compartilhar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
+.compartilhar .nota { margin: 0; }
+.virar-grande { font-family: var(--f-display); font-weight: 750; font-stretch: 80%; font-size: 2.6rem; line-height: 1.05; }
+.virar-frase { font-size: .95rem; color: var(--ink-2); }
+.virar-linhas { display: grid; gap: 4px; font-size: .86rem; }
+.virar-linhas div { display: flex; justify-content: space-between; gap: 12px; border-top: 1px solid var(--line); padding-top: 4px; }
+.virar-linhas span:last-child { font-variant-numeric: tabular-nums; font-weight: 600; text-align: right; }
+.ordem { margin: 0; padding: 10px 12px; border-left: 3px solid var(--accent); background: var(--bg); border-radius: 0 8px 8px 0; font-size: .9rem; }
+td.pos-l { color: var(--lula); font-weight: 600; } td.pos-f { color: var(--flavio); font-weight: 600; }
+#vivo-falta th, #vivo-justa th { white-space: normal; vertical-align: bottom; }
+.local h3 { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.local h3 .muted { font: 500 .78rem var(--f-body); }
+.local .duelo { display: flex; justify-content: space-between; align-items: baseline; font-family: var(--f-display); font-weight: 750; font-stretch: 80%; font-size: 1.9rem; line-height: 1; }
+.local .duelo small { display: block; font: 500 .78rem var(--f-body); color: var(--ink-2); margin-top: 4px; }
+.local .duelo .dir { text-align: right; }
 .aviso-vivo { padding: 18px; border: 1px dashed var(--line-strong); border-radius: 10px; color: var(--ink-2); text-align: center; }
 
 /* ---------- Celular (até 640 px): nada daqui vale no computador ---------- */
@@ -221,6 +236,8 @@ body.modo-sobre #placar, body.modo-sobre nav.abas, body.modo-sobre .turno-box .f
   .logo { width: 72px; height: 45px; }
   .turno-box { grid-auto-flow: column; justify-content: space-between; align-items: center; justify-items: start; gap: 8px; }
   .turno-box .fonte { display: none; }   /* a fonte continua no rodapé */
+  .virar-grande { font-size: 2.1rem; }
+  .local .duelo { font-size: 1.6rem; }
   header.top .cand-hero .sub { display: none; }   /* no topo, fica só a diferença de votos */
   .kpis > .kpi:last-child:nth-child(odd) { grid-column: 1 / -1; }
   #ctl-turno button, #ctl-sobre button { padding: 6px 12px; min-height: 36px; }
@@ -366,6 +383,29 @@ a:hover > .ico { transform: translateY(-2px); }
     </div>
     <div class="placar" id="vivo-placar"></div>
     <div class="kpis" id="vivo-kpis"></div>
+    <div class="compartilhar">
+      <span class="ctl-label">Imagem para o Instagram</span>
+      <div class="seg" id="ctl-img"><button data-v="post" aria-pressed="false">Post 1:1</button><button data-v="stories" aria-pressed="false">Stories 9:16</button></div>
+      <span class="nota" id="vivo-img-nota">Baixa um retrato do placar deste momento, com a logo do LADRI.</span>
+    </div>
+    <div class="grade">
+      <div class="cartao c5">
+        <h3>O que falta para virar</h3>
+        <div id="vivo-virar"></div>
+        <p class="nota" id="vivo-virar-nota"></p>
+      </div>
+      <div class="cartao c7">
+        <h3>Onde estão os votos que faltam</h3>
+        <div class="tabela-wrap" id="vivo-falta"></div>
+        <p class="nota">Estados (e exterior) com mais eleitores em seções ainda não apuradas. "Votos válidos a apurar" é uma estimativa: eleitores que faltam × taxa de votos válidos por eleitor do estado (a do 2º turno, quando já há 5% das seções apuradas; antes disso, a do 1º turno).</p>
+      </div>
+      <div class="cartao c12">
+        <h3>Comparação justa: o mesmo eleitorado</h3>
+        <p class="nota">O placar parcial engana, porque cada região apura num ritmo diferente. Aqui o 2º turno é comparado com o 1º turno e com o 2º turno de 2022 <b>nos mesmos locais</b>: cada município (ou país, no exterior) entra na conta antiga com o mesmo peso que já tem na apuração de agora.</p>
+        <div class="tabela-wrap" id="vivo-justa"></div>
+        <p class="ordem" id="vivo-ordem"></p>
+      </div>
+    </div>
     <div class="grade">
       <div class="cartao c8">
         <div class="controles">
@@ -389,6 +429,11 @@ a:hover > .ico { transform: translateY(-2px); }
         <p class="nota" id="vivo-curva-nota">Cada ponto é uma leitura da API do TSE: % dos votos válidos de cada candidato conforme as seções são apuradas. A curva começa no momento em que esta página foi aberta.</p>
       </div>
     </div>
+    <div class="cab">
+      <h2>Pernambuco, Agreste e Caruaru</h2>
+      <p class="lede">O recorte do LADRI, em tempo real. Durante a apuração, o 1º turno e 2022 aparecem calculados nos mesmos locais já apurados, para a comparação ser justa.</p>
+    </div>
+    <div class="grade" id="vivo-local"></div>
     <div class="cab">
       <h2>Brasileiros no exterior</h2>
       <p class="lede">Apuração dos votos dados nas seções instaladas em embaixadas e consulados de 133 países. A votação no exterior segue o horário local de cada país, por isso a apuração pode andar em ritmo diferente da do Brasil.</p>
@@ -433,6 +478,25 @@ a:hover > .ico { transform: translateY(-2px); }
       <div class="cartao c5">
         <h3>Abstenção por estado: 1º × 2º turno</h3>
         <div class="grafico" id="vivo-abst"></div>
+      </div>
+    </div>
+    <div class="cab">
+      <h2>Municípios que viraram</h2>
+      <p class="lede">Onde o vencedor mudou. Conta só municípios com a apuração concluída; os que ainda estão em apuração aparecem no mapa em cor clara.</p>
+    </div>
+    <div class="controles">
+      <div><span class="ctl-label">Comparar com</span>
+        <div class="seg" id="ctl-vir"><button data-v="t1" aria-pressed="true">1º turno de 2026</button><button data-v="22" aria-pressed="false">2º turno de 2022</button></div></div>
+    </div>
+    <div class="kpis" id="vivo-vir-kpis"></div>
+    <div class="grade">
+      <div class="cartao c7">
+        <div class="mapa" id="vivo-mapa-vir"></div>
+        <div class="legenda" id="vivo-leg-vir"></div>
+      </div>
+      <div class="cartao c5">
+        <h3>Maiores municípios que viraram</h3>
+        <div class="tabela-wrap" id="vivo-t-vir"></div>
       </div>
     </div>
   </section>
@@ -718,6 +782,8 @@ a:hover > .ico { transform: translateY(-2px); }
           <li><b>Margem</b> = % de Flávio − % de Lula, em pontos percentuais (p.p.). Positivo: Flávio à frente; negativo: Lula à frente.</li>
           <li>O país de cada cidade no exterior foi atribuído manualmente, pois o TSE informa só a cidade-sede da seção.</li>
           <li>Os totais foram conferidos: a soma de municípios e exterior é igual ao total nacional divulgado pelo TSE.</li>
+          <li><b>Comparação nos mesmos locais</b> (apuração ao vivo): enquanto o 2º turno não termina, o 1º turno e 2022 são recalculados só com o eleitorado já apurado. Cada município (ou país) entra com peso igual à fração do seu eleitorado do 2º turno já apurada. Assim, a diferença entre os turnos não se confunde com a ordem em que as seções chegam.</li>
+          <li><b>O que falta para virar</b>: "decidido" quer dizer que a diferença já é maior que todos os eleitores das seções não apuradas. O percentual necessário usa uma estimativa dos votos válidos que faltam (eleitores que faltam × taxa de votos válidos de cada estado); não é uma previsão de resultado.</li>
         </ul>
         <h3>Contagem de acessos</h3>
         <p>O site conta os acessos de forma anônima, com o <a href="https://www.goatcounter.com" target="_blank" rel="noopener">GoatCounter</a>: sem cookies e sem guardar dados pessoais dos visitantes. Os números servem só para o LADRI acompanhar o alcance da plataforma.</p>
@@ -1618,7 +1684,8 @@ function montarAoVivo() {
       if (pa22 != null) { const d = r3(l.p_abstencao - pa22); if (d > 0) abstSubiu++; else if (d < 0) abstCaiu++; }
     }
     return [ibge, r1[ci.nome], r1[ci.uf], ok ? l.eleitores : 0, ok ? l.validos : 0, ...CAMPOS.map(c => ok ? r2(l[c]) : null),
-      r2(pl22), r2(pb22), ok ? l.vencedor_num : null, r1[ci.meso], r1[ci.imediata], r2(pa22), ref[3] == null ? null : ref[3]];
+      r2(pl22), r2(pb22), ok ? l.vencedor_num : null, r1[ci.meso], r1[ci.imediata], r2(pa22), ref[3] == null ? null : ref[3],
+      ok ? l.comparecimento : 0, ok ? l.v_flavio : 0, ok ? l.v_lula : 0];
   });
   // UFs + exterior (2022 agregado a partir dos municípios, como no pipeline)
   const ufT1 = new Map(DADOS.t1.ufs.map(u => [u.uf, u]));
@@ -1798,8 +1865,9 @@ function aovivo() {
   const d2 = dadosTurno2(), X = DADOS.t2 ? derivar(DADOS.t2) : VIVO.X;
   if (!d2 || !X) {
     $("#vivo-placar").innerHTML = `<div class="aviso-vivo">A apuração do 2º turno começa às 17h (horário de Brasília) de domingo, 25 de outubro. Esta página lê os resultados do TSE sozinha, a cada minuto: deixe-a aberta e os mapas e gráficos vão se formando.</div>`;
-    ["#vivo-kpis", "#vivo-comp-kpis"].forEach(a => { $(a).innerHTML = ""; });
+    ["#vivo-kpis", "#vivo-comp-kpis", "#vivo-vir-kpis"].forEach(a => { $(a).innerHTML = ""; });
     andamentoVivo(); mapaVivo(null); curvaVivo(); exteriorVivo(null); compararTurnos(null);
+    paraVirarVivo(null); justaVivo(null); localVivo(null); viradasVivo(null); botoesImagem(false);
     return;
   }
   const f = d2.candidatos.find(c => c.n === "22"), l = d2.candidatos.find(c => c.n === "13"), Rv = d2.resumo;
@@ -1813,6 +1881,7 @@ function aovivo() {
     { l: "Locais com apuração concluída", v: fmtInt.format(concluidos), d: `de ${fmtInt.format(TOTAL_LOCAIS)} municípios e cidades no exterior` },
   ]);
   andamentoVivo(); mapaVivo(X); curvaVivo(); exteriorVivo(X); compararTurnos(X);
+  paraVirarVivo(X); justaVivo(X); localVivo(X); viradasVivo(X); botoesImagem(true);
 }
 function mapaVivo(X) {
   const isMun = estadoVivo.nivel === "mun", ind = estadoVivo.ind, esc = escala(ind);
@@ -1906,12 +1975,13 @@ function curvaVivo() {
 function compararTurnos(X) {
   const alvos = ["#vivo-mapa-lula", "#vivo-mapa-flavio", "#vivo-terceiros", "#vivo-abst"];
   if (!X) { alvos.forEach(a => { $(a).innerHTML = `<div class="aviso-vivo">Aparece quando os primeiros resultados chegarem.</div>`; }); $("#vivo-leg-lula").innerHTML = $("#vivo-leg-flavio").innerHTML = $("#vivo-terceiros-nota").textContent = ""; return; }
-  const c1 = n => DADOS.t1.candidatos.find(c => c.n === n).pct, c2 = n => X.D.candidatos.find(c => c.n === n).pct;
+  // 1º turno calculado nos mesmos locais já apurados (no fim da apuração, é o resultado completo dos dois turnos)
+  const M = mesmosLocais([...unidadesBR(X), ...unidadesExt(X)]), obs = M.apurado < 99.995 ? " · nos mesmos locais" : "";
   kpis("#vivo-comp-kpis", [
-    { l: "Lula, % dos válidos", v: `${fmtP(c1("13"))} → ${fmtP(c2("13"))}`, d: fmtPP(c2("13") - c1("13")), cor: "var(--lula)" },
-    { l: "Flávio Bolsonaro, % dos válidos", v: `${fmtP(c1("22"))} → ${fmtP(c2("22"))}`, d: fmtPP(c2("22") - c1("22")), cor: "var(--flavio)" },
-    { l: "Abstenção", v: `${fmtP(+T1.R.p_abstencao)} → ${fmtP(+X.R.p_abstencao)}`, d: fmtPP(X.R.p_abstencao - T1.R.p_abstencao) },
-    { l: "Brancos e nulos", v: `${fmtP(+T1.R.p_brancos_nulos)} → ${fmtP(+X.R.p_brancos_nulos)}`, d: fmtPP(X.R.p_brancos_nulos - T1.R.p_brancos_nulos) },
+    { l: "Lula, % dos válidos", v: `${fmtP(M.lula1)} → ${fmtP(M.lula)}`, d: fmtPP(M.lula - M.lula1) + obs, cor: "var(--lula)" },
+    { l: "Flávio Bolsonaro, % dos válidos", v: `${fmtP(M.flavio1)} → ${fmtP(M.flavio)}`, d: fmtPP(M.flavio - M.flavio1) + obs, cor: "var(--flavio)" },
+    { l: "Abstenção", v: `${fmtP(M.abst1)} → ${fmtP(M.abst)}`, d: fmtPP(M.abst - M.abst1) + obs },
+    { l: "Brancos e nulos", v: `${fmtP(M.bn1)} → ${fmtP(M.bn)}`, d: fmtPP(M.bn - M.bn1) + obs },
   ]);
   const esc = escala("d_turno");
   [["#vivo-mapa-lula", "#vivo-leg-lula", "p_lula", "Lula"], ["#vivo-mapa-flavio", "#vivo-leg-flavio", "p_flavio", "Flávio"]].forEach(([alvo, leg, k, nome]) => {
@@ -1955,6 +2025,269 @@ function compararTurnos(X) {
   }), { dom: [0, 35], ml: 150, lh: 22, rot26: "2º turno", rot22: "1º turno" });
 }
 
+/* ---------- análises do LADRI na apuração ao vivo ---------- */
+const AGRESTE = "Agreste Pernambucano", CARUARU = "2604106";
+const NOME_VENC = { "13": "Lula", "22": "Flávio", "70": "Cury", "14": "Renan", "55": "Caiado" };
+const vencDe = (l, f) => l > f ? "13" : f > l ? "22" : null;   // 2º turno: só dois candidatos (empate: sem vencedor)
+const ref22De = ibge => BASE.ref22[IBGE_TSE.get(ibge)] || null;
+const pctDe = (a, b) => b > 0 ? 100 * a / b : null;
+// Unidades para comparar: municípios brasileiros (com 2022) e países do exterior (sem 2022 por país).
+// q = fração do eleitorado do 2º turno já apurada no local (e.est / e.te dos arquivos do TSE). O eleitorado apto
+// muda um pouco entre os turnos (transferências temporárias), por isso a fração usa o total do próprio 2º turno.
+function fracaoApurada(cods) {
+  let est = 0, te = 0;
+  for (const c of cods) { const j = VIVO.mun.get(c); if (j) { est += nTSE(j.e.est); te += nTSE(j.e.te); } }
+  return { q: te > 0 ? Math.min(1, est / te) : 0, te };
+}
+function unidade(m2, m1, r, cods) {
+  const el1 = m1 ? m1.eleitores : 0;
+  if (DADOS.t2) return { m2, m1, r, q: m2.eleitores > 0 ? 1 : 0, te2: m2.eleitores || el1 };   // resultado final gravado
+  const { q, te } = fracaoApurada(cods);
+  return { m2, m1, r, q, te2: te || el1 };
+}
+const unidadesBR = X => X.MUN.map(m2 => { const cod = IBGE_TSE.get(m2.ibge); return unidade(m2, T1.MUN_IDX.get(m2.ibge), BASE.ref22[cod] || null, [cod]); });
+function unidadesExt(X) {
+  const p1 = new Map(T1.PAISES.map(p => [p.iso3, p])), cods = d3.group(BASE.ext, c => c[2]);
+  return X.PAISES.map(m2 => unidade(m2, p1.get(m2.iso3), null, (cods.get(m2.iso3) || []).map(c => c[0])));
+}
+
+// Soma as unidades do 2º turno e monta as linhas de base "nos mesmos locais": cada unidade entra no 1º turno
+// e em 2022 com o peso q = fração do seu eleitorado já apurada no 2º turno. Com tudo apurado, q = 1 em todas.
+function mesmosLocais(unidades) {
+  const s = { te2: 0, el2: 0, n: 0, val2: 0, l2: 0, f2: 0, comp2: 0, el1w: 0, comp1: 0, val1: 0, l1: 0, f1: 0,
+    val2r: 0, l2r: 0, f2r: 0, val22: 0, l22: 0, b22: 0, el2r: 0, comp2r: 0, ap22: 0, ab22: 0 };
+  for (const { m2, m1, r, q, te2 } of unidades) {
+    if (!m1 || !m1.eleitores) continue;
+    s.te2 += te2;
+    if (!m2 || !m2.eleitores || !q) continue;
+    s.n++; s.el2 += m2.eleitores; s.val2 += m2.validos; s.l2 += m2.v_lula; s.f2 += m2.v_flavio; s.comp2 += m2.comparecimento;
+    s.el1w += q * m1.eleitores; s.comp1 += q * m1.comparecimento; s.val1 += q * m1.validos; s.l1 += q * m1.v_lula; s.f1 += q * m1.v_flavio;
+    if (r && r[0]) { s.val2r += m2.validos; s.l2r += m2.v_lula; s.f2r += m2.v_flavio; s.val22 += q * r[0]; s.l22 += q * r[1]; s.b22 += q * r[2]; }
+    if (r && r[3]) { s.el2r += m2.eleitores; s.comp2r += m2.comparecimento; s.ap22 += q * r[3]; s.ab22 += q * r[4]; }
+  }
+  const abst = (c, e) => e > 0 ? 100 - pctDe(c, e) : null;
+  return { n: s.n, apurado: pctDe(s.el2, s.te2), validos: s.val2, v_lula: s.l2, v_flavio: s.f2,
+    lula: pctDe(s.l2, s.val2), flavio: pctDe(s.f2, s.val2), abst: abst(s.comp2, s.el2), bn: pctDe(s.comp2 - s.val2, s.comp2),
+    lula1: pctDe(s.l1, s.val1), flavio1: pctDe(s.f1, s.val1), abst1: abst(s.comp1, s.el1w), bn1: pctDe(s.comp1 - s.val1, s.comp1),
+    lula_r: pctDe(s.l2r, s.val2r), flavio_r: pctDe(s.f2r, s.val2r), lula22: pctDe(s.l22, s.val22), bols22: pctDe(s.b22, s.val22),
+    abst_r: abst(s.comp2r, s.el2r), abst22: pctDe(s.ab22, s.ap22) };
+}
+
+// 1. O que falta para virar (aritmética com os arquivos do Brasil e de cada estado)
+function calcVirar(X) {
+  const f = X.D.candidatos.find(c => c.n === "22"), l = X.D.candidatos.find(c => c.n === "13");
+  const lider = f.votos >= l.votos ? f : l, seg = lider === f ? l : f, dif = lider.votos - seg.votos;
+  const base = { lider, seg, dif, validos: X.R.validos };
+  if (DADOS.t2 || !VIVO.br) return { ...base, final: true };
+  const e = VIVO.br.e, aptosFalta = Math.max(0, nTSE(e.te) - nTSE(e.est));
+  const ufT1 = new Map(DADOS.t1.ufs.map(u => [u.uf.toLowerCase(), u]));
+  const linhas = BASE.ufs_cfg.map(([sg]) => {
+    const j = VIVO.uf.get(sg), u1 = ufT1.get(sg);
+    const te = j ? nTSE(j.e.te) : u1.eleitores, est = j ? nTSE(j.e.est) : 0, falta = Math.max(0, te - est);
+    const pst = j ? pstNum(j.s.pst) : 0, vv = j ? nTSE(j.v.vv) : 0;
+    const usa2 = pst >= 5 && est > 0, taxa = usa2 ? vv / est : u1.validos / u1.eleitores;
+    const votos = j ? extrairJS(j)[1] : [], vt = n => (votos.find(v => v.numero === n) || { votos: 0 }).votos;
+    return { sg, nome: u1.uf === "ZZ" ? "Exterior" : u1.nome, pst, falta, taxa, usa2, validosFalta: falta * taxa,
+      margem: vv > 0 ? 100 * (vt("22") - vt("13")) / vv : null };
+  });
+  const validosFalta = d3.sum(linhas, x => x.validosFalta);
+  const precisa = validosFalta > 0 ? 50 + 50 * dif / validosFalta : null;
+  const concluida = VIVO.br.tf === "s" || aptosFalta === 0;
+  return { ...base, final: concluida, aptosFalta, validosFalta, precisa, decidido: !concluida && dif > aptosFalta,
+    linhas: linhas.filter(x => x.falta > 0).sort((a, b) => b.validosFalta - a.validosFalta) };
+}
+function paraVirarVivo(X) {
+  if (!X) {
+    $("#vivo-virar").innerHTML = `<div class="aviso-vivo">Aparece quando os primeiros votos forem totalizados.</div>`;
+    $("#vivo-falta").innerHTML = $("#vivo-virar-nota").textContent = "";
+    return;
+  }
+  const V = calcVirar(X), nl = V.lider.n === "13" ? "Lula" : "Flávio Bolsonaro", ns = V.seg.n === "13" ? "Lula" : "Flávio Bolsonaro";
+  const corS = V.seg.n === "13" ? "var(--lula)" : "var(--flavio)", corL = V.lider.n === "13" ? "var(--lula)" : "var(--flavio)";
+  const linha = (a, b) => `<div><span>${a}</span><span>${b}</span></div>`;
+  if (V.final) {
+    $("#vivo-virar").innerHTML = `<div class="virar-grande" style="color:${corL}">${nl}</div><div class="virar-frase">venceu com ${fmtInt.format(V.dif)} votos de diferença (${fmtPP(100 * V.dif / V.validos, 2)} dos válidos). Não há mais votos a apurar.</div>`;
+    $("#vivo-falta").innerHTML = `<div class="aviso-vivo">Todas as seções foram apuradas.</div>`;
+    $("#vivo-virar-nota").textContent = "";
+    return;
+  }
+  let topo;
+  if (V.dif === 0) topo = `<div class="virar-grande">Empate</div><div class="virar-frase">Os dois candidatos têm o mesmo número de votos neste momento.</div>`;
+  else if (V.decidido) topo = `<div class="virar-grande" style="color:${corL}">Decidido</div><div class="virar-frase">A diferença (${fmtInt.format(V.dif)} votos) já é maior que o total de eleitores aptos nas seções que faltam (${fmtInt.format(V.aptosFalta)}). Matematicamente, ${ns} não alcança mais ${nl}.</div>`;
+  else if (V.precisa > 100) topo = `<div class="virar-grande" style="color:${corL}">Fora de alcance</div><div class="virar-frase">Mesmo com 100% dos votos válidos que ainda devem entrar, ${ns} não alcançaria ${nl}, a não ser que o comparecimento nos locais que faltam fique muito acima do observado.</div>`;
+  else topo = `<div class="virar-frase">Para passar ${nl}, ${ns} precisaria de</div><div class="virar-grande num" style="color:${corS}">${fmtP(V.precisa, 1)}</div><div class="virar-frase">dos votos válidos que ainda faltam apurar. Até agora, ${ns} tem ${fmtP(V.seg.pct, 2)} dos válidos.</div>`;
+  $("#vivo-virar").innerHTML = `${topo}<div class="virar-linhas num">
+    ${linha("Diferença agora", `${fmtInt.format(V.dif)} votos a favor de ${nl}`)}
+    ${linha("Eleitores aptos em seções não apuradas", fmtInt.format(V.aptosFalta))}
+    ${linha("Votos válidos que ainda devem entrar (estimativa)", `≈ ${fmtInt.format(Math.round(V.validosFalta))}`)}</div>`;
+  $("#vivo-virar-nota").textContent = "Conta feita com os números oficiais já divulgados pelo TSE, sem projeção de quem vai ganhar. A única estimativa é o total de votos válidos que ainda vai entrar (eleitores que faltam × taxa de votos válidos de cada estado). \u201cDecidido\u201d não depende de estimativa: compara a diferença com todos os eleitores que ainda podem ter votos apurados.";
+  const tot = V.validosFalta || 1;
+  $("#vivo-falta").innerHTML = `<table><thead><tr><th>Local</th><th>Seções apuradas</th><th>Eleitores que faltam</th><th>Válidos a apurar</th><th>% do que falta</th><th>Lidera ali</th></tr></thead><tbody>${V.linhas.slice(0, 10).map(x => {
+    const lid = x.margem == null ? "—" : x.margem > 0 ? `Flávio ${fmtPP(x.margem)}` : x.margem < 0 ? `Lula ${fmtPP(-x.margem)}` : "empate";
+    return `<tr><td>${x.nome}</td><td>${fmtP(x.pst, x.pst === 0 ? 0 : 1)}</td><td>${fmtInt.format(x.falta)}</td><td>≈ ${fmtInt.format(Math.round(x.validosFalta))}</td><td>${fmtP(100 * x.validosFalta / tot)}</td><td class="${x.margem > 0 ? "pos-f" : x.margem < 0 ? "pos-l" : ""}">${lid.replace("+", "")}</td></tr>`;
+  }).join("")}</tbody></table>`;
+}
+
+// 2. Comparação justa: o mesmo eleitorado no 1º turno e em 2022
+function justaVivo(X) {
+  if (!X) { $("#vivo-justa").innerHTML = `<div class="aviso-vivo">Aparece quando os primeiros votos forem totalizados.</div>`; $("#vivo-ordem").hidden = true; return; }
+  const M = mesmosLocais([...unidadesBR(X), ...unidadesExt(X)]);
+  if (!M.n || !M.validos) { $("#vivo-justa").innerHTML = `<div class="aviso-vivo">Aparece quando os primeiros municípios forem lidos.</div>`; $("#vivo-ordem").hidden = true; return; }
+  const cel = (v, ref) => `<td>${fmtP(ref)}</td><td class="${v - ref > 0 ? "pos" : v - ref < 0 ? "neg" : ""}">${fmtPP(v - ref)}</td>`;
+  $("#vivo-justa").innerHTML = `<table><thead><tr><th></th><th>2º turno, apurado</th><th>1º turno, mesmos locais</th><th>Variação</th><th>2º turno de 2022, mesmos locais¹</th><th>Variação</th></tr></thead><tbody>
+    <tr><td><b style="color:var(--lula)">Lula</b></td><td><b>${fmtP(M.lula, 2)}</b></td>${cel(M.lula, M.lula1)}${cel(M.lula_r, M.lula22)}</tr>
+    <tr><td><b style="color:var(--flavio)">Flávio Bolsonaro</b> <span class="muted">(2022: Jair)</span></td><td><b>${fmtP(M.flavio, 2)}</b></td>${cel(M.flavio, M.flavio1)}${cel(M.flavio_r, M.bols22)}</tr>
+    <tr><td>Abstenção</td><td>${fmtP(M.abst, 2)}</td>${cel(M.abst, M.abst1)}${cel(M.abst_r, M.abst22)}</tr>
+    </tbody></table><p class="nota">% dos votos válidos (abstenção: % dos eleitores aptos), somando ${fmtInt.format(M.n)} municípios e países com votos já lidos (${fmtP(M.apurado, 1)} do eleitorado). ¹ Só municípios brasileiros: o TSE não publica 2022 por país.</p>`;
+  // Efeito da ordem: quanto os locais já apurados diferem do país inteiro, medido no 1º turno
+  const m1 = M.flavio1 - M.lula1, mBR = 100 * (T1.R.v_flavio - T1.R.v_lula) / T1.R.validos, ef = m1 - mBR;
+  const o = $("#vivo-ordem"); o.hidden = false;
+  if (M.apurado >= 99.995) { o.innerHTML = `Com todo o eleitorado apurado, a comparação vale para o país inteiro: de um turno para o outro, a diferença Flávio − Lula foi de ${fmtPP(mBR)} para ${fmtPP(M.flavio - M.lula)}.`; return; }
+  const quem = ef > 0 ? "Flávio" : "Lula", forte = Math.abs(ef) >= 0.05;
+  o.innerHTML = `<b>Efeito da ordem da apuração.</b> No 1º turno, os locais já apurados deram a Flávio − Lula ${fmtPP(m1)}, contra ${fmtPP(mBR)} no país inteiro. ${forte ? `Por isso, só pela ordem em que as seções chegam, a parcial está cerca de ${fmtPP(Math.abs(ef)).replace("+", "")} mais favorável a ${quem} do que o país. ` : "Os locais já apurados se parecem com o país como um todo. "}A mudança real entre os turnos é a coluna \u201cVariação\u201d: diferença Flávio − Lula de ${fmtPP(m1)} para ${fmtPP(M.flavio - M.lula)} nesses mesmos locais.`;
+}
+
+// 4. Pernambuco, Agreste e Caruaru
+function localVivo(X) {
+  const box = $("#vivo-local");
+  if (!X) { box.innerHTML = `<div class="cartao c12"><div class="aviso-vivo">Aparece quando os primeiros votos de Pernambuco forem lidos.</div></div>`; return; }
+  const us = unidadesBR(X).filter(u => u.m2.uf === "PE");
+  const blocos = [["Caruaru", us.filter(u => u.m2.ibge === CARUARU)], ["Agreste Pernambucano", us.filter(u => u.m2.meso === AGRESTE)], ["Pernambuco", us]];
+  box.innerHTML = blocos.map(([nome, lista]) => {
+    const M = mesmosLocais(lista);
+    if (!M.n || !M.validos) return `<div class="cartao c4 local"><h3>${nome}</h3><div class="aviso-vivo">Ainda sem votos apurados.</div></div>`;
+    const ap = M.apurado >= 99.995 ? "apuração concluída" : `${fmtP(M.apurado, 1)} do eleitorado apurado`, ref = M.apurado >= 99.995 ? "" : ", mesmos locais";
+    const lin = (r, a, b) => `<div><span>${r}</span><span>${a} · ${b}</span></div>`;
+    return `<div class="cartao c4 local"><h3>${nome}<span class="muted">${ap}</span></h3>
+      <div class="duelo num"><div style="color:var(--flavio)">${fmtP(M.flavio, 1)}<small>Flávio · ${fmtInt.format(M.v_flavio)}</small></div><div class="dir" style="color:var(--lula)">${fmtP(M.lula, 1)}<small>Lula · ${fmtInt.format(M.v_lula)}</small></div></div>
+      ${mini({ p_flavio: M.flavio, p_lula: M.lula })}
+      <div class="virar-linhas num">
+        ${lin(`1º turno${ref}`, `Flávio ${fmtP(M.flavio1)}`, `Lula ${fmtP(M.lula1)}`)}
+        ${lin(`2º turno de 2022${ref}`, `Jair ${fmtP(M.bols22)}`, `Lula ${fmtP(M.lula22)}`)}
+        ${lin("Abstenção: 2º turno · 1º turno", fmtP(M.abst), fmtP(M.abst1))}
+      </div></div>`;
+  }).join("");
+}
+
+// 3. Municípios que viraram
+const estadoVir = { ref: "t1" };
+function viradasVivo(X) {
+  const alvos = ["#vivo-mapa-vir", "#vivo-t-vir"];
+  if (!X) { alvos.forEach(a => { $(a).innerHTML = `<div class="aviso-vivo">Aparece quando os primeiros municípios forem apurados.</div>`; }); $("#vivo-leg-vir").innerHTML = ""; return; }
+  const ref = estadoVir.ref, rotAntes = ref === "t1" ? "1º turno" : "2022", nomeAntes = v => ref === "22" && v === "22" ? "Jair" : NOME_VENC[v] || "—";
+  const linhas = new Map();
+  for (const m2 of X.MUN) {
+    if (!m2.eleitores) continue;
+    const m1 = T1.MUN_IDX.get(m2.ibge), r = ref22De(m2.ibge);
+    const antes = ref === "t1" ? (m1 ? m1.venc : null) : (r && r[0] ? vencDe(r[1], r[2]) : null);
+    const agora = vencDe(m2.v_lula, m2.v_flavio), conc = (pstMunicipio(m2.ibge) || 0) >= 100;
+    linhas.set(m2.ibge, { m2, el1: m1 ? m1.eleitores : 0, antes, agora, conc, virou: !!(antes && agora && antes !== agora) });
+  }
+  const conc = [...linhas.values()].filter(x => x.conc), vir = conc.filter(x => x.virou), parc = [...linhas.values()].filter(x => !x.conc && x.virou);
+  const paraL = vir.filter(x => x.agora === "13").length, paraF = vir.filter(x => x.agora === "22").length;
+  kpis("#vivo-vir-kpis", [
+    { l: `Mudaram de vencedor desde o ${rotAntes}`, v: fmtInt.format(vir.length), d: `de ${fmtInt.format(conc.length)} municípios com apuração concluída` },
+    { l: "Viraram para Lula", v: fmtInt.format(paraL), d: ref === "t1" ? "antes: Flávio ou outro candidato" : "antes: Jair Bolsonaro", cor: "var(--lula)" },
+    { l: "Viraram para Flávio", v: fmtInt.format(paraF), d: ref === "t1" ? "antes: Lula ou outro candidato" : "antes: Lula", cor: "var(--flavio)" },
+    { l: "Em apuração, por enquanto virados", v: fmtInt.format(parc.length), d: "podem mudar até o fim da apuração" },
+  ]);
+  const r = desenhaMapa("#vivo-mapa-vir", G.mun, {
+    W: 800, H: 760,
+    getObj: id => linhas.get(id) || null,
+    cor: o => o.virou ? css(o.agora === "13" ? "--lula" : "--flavio") : css("--mid"),
+    tip: o => `<b>${o.m2.nome} (${o.m2.uf})</b>${linhaTip(null, `Vencedor no ${rotAntes}`, nomeAntes(o.antes))}${linhaTip(null, "Vencedor agora", NOME_VENC[o.agora] || "empate")}${linhaTip(null, "Margem agora", fmtPP(o.m2.margem))}<div class="muted">${o.conc ? "apuração concluída" : "apuração parcial"}</div>`,
+    contorno: UF_GEO_MERGE,
+  });
+  r.feats.attr("fill-opacity", f => { const o = linhas.get(f.properties.id); return o && o.virou && !o.conc ? .45 : 1; });
+  $("#vivo-leg-vir").innerHTML = `<div class="chips"><span class="chip"><i style="background:var(--lula)"></i>Virou para Lula</span><span class="chip"><i style="background:var(--flavio)"></i>Virou para Flávio</span><span class="chip"><i style="background:var(--mid)"></i>Manteve o vencedor</span><span class="chip"><i style="background:var(--line)"></i>Sem dados</span></div><div class="muted">Cor clara: apuração ainda parcial no município.</div>`;
+  const top = [...vir, ...parc].sort((a, b) => b.el1 - a.el1).slice(0, 12);
+  $("#vivo-t-vir").innerHTML = top.length ? `<table><thead><tr><th>Município</th><th>${rotAntes}</th><th>Agora</th><th>Margem</th></tr></thead><tbody>${top.map(x =>
+    `<tr><td>${x.m2.nome} (${x.m2.uf})${x.conc ? "" : ` <span class="muted">· parcial</span>`}</td><td>${nomeAntes(x.antes)}</td><td class="${x.agora === "13" ? "pos-l" : "pos-f"}">${NOME_VENC[x.agora]}</td><td>${fmtPP(Math.abs(x.m2.margem)).replace("+", "")}</td></tr>`).join("")}</tbody></table>`
+    : `<div class="aviso-vivo">Nenhum município virou até agora.</div>`;
+}
+
+// 7. Imagem para o Instagram (post 1:1 ou stories 9:16), desenhada em canvas
+const LOGO_SRC = "__LOGO__";
+function botoesImagem(ativo) { document.querySelectorAll("#ctl-img button").forEach(b => { b.disabled = !ativo; }); }
+async function desenharImagem(formato) {
+  const X = DADOS.t2 ? derivar(DADOS.t2) : VIVO.X, d2 = dadosTurno2();
+  if (!X || !d2) return null;
+  const W = 1080, H = formato === "stories" ? 1920 : 1080, st = formato === "stories";
+  const cv = document.createElement("canvas"); cv.width = W; cv.height = H;
+  const ctx = cv.getContext("2d");
+  const C = { bg: "#0e1110", ink: "#eef1ef", ink2: "#bcc3be", muted: "#868d89", line: "#2a302d", mid: "#343a37", flavio: "#3987e5", lula: "#e66767", outros: "#5f6561", accent: "#3fae63" };
+  try { await Promise.all(["800 120px Archivo", "700 40px 'Public Sans'", "500 30px 'Public Sans'"].map(f => document.fonts.load(f))); } catch (e) {}
+  const logo = await new Promise(ok => { const im = new Image(); im.onload = () => ok(im); im.onerror = () => ok(null); im.src = LOGO_SRC; });
+  const fonte = (peso, px, fam = "'Public Sans'") => { ctx.font = `${peso} ${px}px ${fam}, system-ui, sans-serif`; };
+  const texto = (t, x, y, cor, alinh = "left") => { ctx.fillStyle = cor; ctx.textAlign = alinh; ctx.fillText(t, x, y); };
+  ctx.fillStyle = C.bg; ctx.fillRect(0, 0, W, H);
+  ctx.fillStyle = C.accent; ctx.fillRect(0, 0, W, 10);
+  // Posições de cada formato (stories: conteúdo fora das faixas que o Instagram cobre no topo e no rodapé)
+  const L = st
+    ? { logo: [200, 110], tit: [410, 76], sub: [462, 32], pct: [660, 168], nome: [720, 40], votos: [764, 30], barra: [800, 28], lider: [876, 34],
+        mapa: [930, 936, 500], ind: { y: 1490, dy: 120, cols: 2, rot: 28, val: 56, dv: 64 }, nota: [1730, 26], site: [1776, 30] }
+    : { logo: [56, 96], tit: [230, 64], sub: [276, 28], pct: [420, 140], nome: [470, 34], votos: [508, 26], barra: [536, 24], lider: [604, 30],
+        mapa: [640, 500, 320], ind: { y: 680, dy: 80, cols: 1, rot: 24, val: 40, dv: 42 }, nota: [1010, 22], site: [1048, 24] };
+  const m = 72, bw = W - 2 * m;
+  const condensada = on => { if ("fontStretch" in ctx) ctx.fontStretch = on ? "condensed" : "normal"; };
+  // Reduz a fonte até os textos caberem na largura (números grandes e notas longas)
+  const ajustar = (peso, px, fam, textos, maxW, cond = false) => {
+    for (let t = px; ; t -= 2) { fonte(peso, t, fam); condensada(cond); if (t <= 14 || d3.sum(textos, x => ctx.measureText(x).width) <= maxW) return t; }
+  };
+  if (logo) { const lh = L.logo[1], lw = lh * logo.width / logo.height; ctx.drawImage(logo, m, L.logo[0], lw, lh); }
+  const f = d2.candidatos.find(c => c.n === "22"), l = d2.candidatos.find(c => c.n === "13"), pst = pstNum(d2.status.pst), final = !!d2.status.final;
+  fonte(800, L.tit[1], "Archivo"); condensada(true); texto("Eleições 2026 · 2º turno", m, L.tit[0], C.ink); condensada(false);
+  const hg = VIVO.br && VIVO.br.hg ? String(VIVO.br.hg).slice(0, 5) : "", quando = hg ? `atualizado pelo TSE às ${hg}` : "dados do TSE";
+  const sub = final ? "Resultado final da apuração" : `Apuração ao vivo · ${fmtP(pst, 2)} das seções · ${quando}`;
+  ajustar(500, L.sub[1], undefined, [sub], bw); texto(sub, m, L.sub[0], C.ink2);
+  // Placar
+  ajustar(800, L.pct[1], "Archivo", [fmtP(f.pct, 2), fmtP(l.pct, 2)], bw - 60, true);
+  texto(fmtP(f.pct, 2), m, L.pct[0], C.flavio); texto(fmtP(l.pct, 2), W - m, L.pct[0], C.lula, "right"); condensada(false);
+  fonte(700, L.nome[1]); texto("Flávio Bolsonaro", m, L.nome[0], C.ink); texto("Lula", W - m, L.nome[0], C.ink, "right");
+  fonte(500, L.votos[1]); texto(`${fmtInt.format(f.votos)} votos`, m, L.votos[0], C.muted); texto(`${fmtInt.format(l.votos)} votos`, W - m, L.votos[0], C.muted, "right");
+  const [yb, hb] = L.barra, out = Math.max(0, 100 - f.pct - l.pct);
+  ctx.fillStyle = C.flavio; ctx.fillRect(m, yb, bw * f.pct / 100, hb);
+  ctx.fillStyle = C.outros; ctx.fillRect(m + bw * f.pct / 100, yb, bw * out / 100, hb);
+  ctx.fillStyle = C.lula; ctx.fillRect(m + bw * (f.pct + out) / 100, yb, bw * l.pct / 100, hb);
+  const dv = fmtInt.format(Math.abs(f.votos - l.votos)), lider = f.votos >= l.votos ? "Flávio Bolsonaro" : "Lula";
+  const fraseLider = f.votos === l.votos ? "Empate neste momento" : final ? `${lider} é eleito presidente · diferença de ${dv} votos` : `${lider} à frente por ${dv} votos`;
+  ajustar(600, L.lider[1], undefined, [fraseLider], bw);
+  texto(fraseLider, m, L.lider[0], C.ink);
+  // Mapa por estado: cor de quem lidera, tom mais claro quanto menor a vantagem
+  const [my, mw, mh] = L.mapa;
+  const proj = d3.geoMercator().fitExtent([[m, my], [m + mw, my + mh]], UF_GEO_MERGE), path = d3.geoPath(proj, ctx);
+  for (const ft of G.uf.features) {
+    const u = X.UF_IDX.get(ft.properties.id), mg = u ? u.margem : null;
+    ctx.beginPath(); path(ft);
+    const base = mg > 0 ? C.flavio : C.lula;   // vantagem pequena: tom claro; grande: cor cheia
+    ctx.fillStyle = mg == null ? C.line : mg === 0 ? C.mid : d3.interpolateLab(d3.interpolateLab(base, "#ffffff")(0.55), base)(Math.min(1, Math.abs(mg) / 25));
+    ctx.fill(); ctx.strokeStyle = C.bg; ctx.lineWidth = 1.6; ctx.stroke();
+  }
+  // Indicadores: ao lado do mapa (post) ou abaixo, em duas colunas (stories)
+  const R = X.R, I = L.ind, kx = st ? m : m + mw + 48;
+  [["Estados com Flávio à frente", String(X.UFS.filter(u => u.margem > 0).length)], ["Estados com Lula à frente", String(X.UFS.filter(u => u.margem < 0).length)],
+    ["Abstenção", fmtP(+R.p_abstencao)], ["Brancos e nulos", fmtP(+R.p_brancos_nulos)]].forEach(([rot, v], i) => {
+    const x = kx + (i % I.cols) * (bw / 2), y = I.y + Math.floor(i / I.cols) * I.dy, sw = i < 2 ? I.rot + 10 : 0;
+    if (sw) { ctx.fillStyle = i === 0 ? C.flavio : C.lula; ctx.fillRect(x, y - I.rot * .8, I.rot * .8, I.rot * .8); }
+    fonte(500, I.rot); texto(rot, x + sw, y, C.muted); fonte(800, I.val, "Archivo"); texto(v, x, y + I.dv, C.ink);
+  });
+  const nota = final ? "Fonte: TSE. Mapa: vencedor em cada estado (tom mais claro: vantagem menor)." : "Números oficiais e parciais do TSE, sem projeção. Mapa: quem lidera em cada estado.";
+  ajustar(500, L.nota[1], undefined, [nota], bw); texto(nota, m, L.nota[0], C.muted);
+  fonte(700, L.site[1]); texto("ladriasces.github.io/Elei-es-2026---LADRI", m, L.site[0], C.ink2); texto("@ladri_asces", W - m, L.site[0], C.ink2, "right");
+  return cv;
+}
+async function baixarImagem(formato) {
+  const cv = await desenharImagem(formato);
+  if (!cv) return;
+  const nome = `ladri-2turno-${formato}-${new Date().toTimeString().slice(0, 5).replace(":", "h")}.png`;
+  cv.toBlob(b => {
+    if (!b) return;
+    const a = document.createElement("a"); a.href = URL.createObjectURL(b); a.download = nome;
+    document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+    $("#vivo-img-nota").textContent = `Imagem gerada: ${nome}`;
+  }, "image/png");
+}
+
 /* ---------- visão geral ---------- */
 function geral() {
   const val = R.validos, comp = R.comparecimento;
@@ -1988,6 +2321,8 @@ seg("#ctl-turno", v => usarTurno(+v));
 seg("#ctl-sobre", () => abrir("sobre"));
 seg("#ctl-vivo-nivel", v => { estadoVivo.nivel = v; mapaVivo(DADOS.t2 ? derivar(DADOS.t2) : VIVO.X); });
 seg("#ctl-vivo-ind", v => { estadoVivo.ind = v; mapaVivo(DADOS.t2 ? derivar(DADOS.t2) : VIVO.X); });
+seg("#ctl-vir", v => { estadoVir.ref = v; viradasVivo(DADOS.t2 ? derivar(DADOS.t2) : VIVO.X); });
+seg("#ctl-img", v => { marcarSeg("#ctl-img", ""); baixarImagem(v); });
 
 const RENDER = { geral, aovivo, mapa: () => { mapaBR(); estadoMapa.sel ? detalheBR(estadoMapa.sel) : detalheBRPadrao(); tabelasBR(); }, regiao: () => { marcarSeg("#ctl-reg", estadoReg.reg); regiao(); }, estado, abstencao, exterior, comparar, sobre: () => {} };
 const feitos = new Set();

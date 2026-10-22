@@ -62,6 +62,11 @@ def r(x, n=2):
     return None if pd.isna(x) else round(float(x), n)
 
 
+def n0(x) -> int:
+    """Contagem inteira (0 quando o local ainda não tem dados)."""
+    return 0 if pd.isna(x) else int(x)
+
+
 def montar_turno(turno: int) -> dict:
     """Dados de um turno no formato que o painel usa (o motor ao vivo do navegador monta o mesmo formato)."""
     OUT = pasta_saida(turno)
@@ -111,12 +116,15 @@ def montar_turno(turno: int) -> dict:
             for u in ufs.itertuples()
         ],
         # Municípios em formato colunar compacto
-        "mun_cols": ["ibge", "nome", "uf", "eleitores", "validos", *campos, "p_lula22", "p_bolsonaro22", "venc", "meso", "imediata", "p_abstencao22", "aptos22"],
+        # comparecimento e votos em números absolutos: base das análises ao vivo (comparação nos mesmos locais)
+        "mun_cols": ["ibge", "nome", "uf", "eleitores", "validos", *campos, "p_lula22", "p_bolsonaro22", "venc", "meso", "imediata", "p_abstencao22", "aptos22",
+                     "comparecimento", "v_flavio", "v_lula"],
         "mun": [
             [m.cod_ibge, m.nome_ibge, m.uf, int(m.eleitores), int(m.validos), *[r(getattr(m, c)) for c in campos],
              r(m.p_lula22), r(m.p_bolsonaro22), venc(m.vencedor_num),
              m.mesorregiao if isinstance(m.mesorregiao, str) else None, m.regiao_imediata,
-             r(m.p_abstencao22), None if pd.isna(m.aptos22) else int(m.aptos22)]
+             r(m.p_abstencao22), None if pd.isna(m.aptos22) else int(m.aptos22),
+             n0(m.comparecimento), n0(m.v_flavio), n0(m.v_lula)]
             for m in mun.itertuples()
         ],
         "paises": [
