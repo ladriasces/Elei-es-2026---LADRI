@@ -80,8 +80,11 @@ def coletar(token: str, inicio: str, fim: str) -> dict:
     per = {"start": inicio, "end": fim}
     dados = {"periodo": per, "total": buscar("stats/total", token, **per),
              "hits": buscar("stats/hits", token, limit=100, **per)}
+    # Origem, local, tela etc. só das visitas ao site (sem os cliques nas abas, que o GoatCounter conta à parte)
+    paginas = ",".join(str(h["path_id"]) for h in dados["hits"].get("hits") or [] if not h.get("event"))
+    filtro = {"include_paths": paginas} if paginas else {}
     for pagina in ("toprefs", "locations", "systems", "browsers", "sizes"):
-        dados[pagina] = buscar(f"stats/{pagina}", token, limit=20, **per)
+        dados[pagina] = buscar(f"stats/{pagina}", token, limit=20, **per, **filtro)
     return dados
 
 
@@ -132,14 +135,15 @@ def tabela(titulo: str, linhas: list[tuple[str, int]], vazio: str = "Sem dados a
 
 
 def stats_lista(d: dict, traduz: dict | None = None) -> list[tuple[str, int]]:
-    out = []
+    soma: dict[str, int] = {}   # nomes que viram o mesmo rótulo (ex.: "ig" e "l.instagram.com") são somados
     for s in d.get("stats") or []:
         n = int(s.get("count") or 0)
         if not n:
             continue
         nome = s.get("name") or s.get("id") or ""   # tamanhos de tela vêm só com o id (phone, desktop...)
-        out.append(((traduz or {}).get(nome, nome) or "Não identificado", n))
-    return out
+        rot = (traduz or {}).get(nome, nome) or "Não identificado"
+        soma[rot] = soma.get(rot, 0) + n
+    return sorted(soma.items(), key=lambda x: -x[1])
 
 
 def gerar(dados: dict) -> None:
@@ -175,7 +179,9 @@ def gerar(dados: dict) -> None:
 
     eventos = [h for h in dados["hits"].get("hits") or [] if h.get("event") and str(h.get("path", "")).startswith("aba-")]
     abas = sorted(((h.get("title") or h["path"][4:], int(h.get("count") or 0)) for h in eventos), key=lambda x: -x[1])
-    origens = stats_lista(dados["toprefs"], {"": DIRETO, "(no data)": DIRETO})
+    origens = stats_lista(dados["toprefs"], {"": DIRETO, "(no data)": DIRETO, "ig": "Instagram", "l.instagram.com": "Instagram",
+                                             "instagram.com": "Instagram", "www.instagram.com": "Instagram", "m.facebook.com": "Facebook",
+                                             "www.facebook.com": "Facebook", "l.facebook.com": "Facebook", "lm.facebook.com": "Facebook"})
     locais = stats_lista(dados["locations"], PAISES)
     telas = stats_lista(dados["sizes"], TELAS)
     sistemas = stats_lista(dados["systems"])
