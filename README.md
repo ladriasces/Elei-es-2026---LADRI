@@ -44,7 +44,7 @@ A aba também traz análises próprias do LADRI, calculadas ao vivo:
 - **Municípios que viraram:** em relação ao 1º turno e ao 2º turno de 2022, com mapa e lista dos maiores.
 - **Imagem para o Instagram:** post (1:1) ou stories (9:16) com o placar do momento, gerada no navegador.
 
-Essas análises foram conferidas com um validador independente em Python (2º turno simulado, 1º turno dos arquivos brutos do TSE e 2022 direto dos zips do Portal de Dados Abertos): 210 valores idênticos com a apuração parcial e 166 com a apuração completa.
+Essas análises foram conferidas com um validador independente em Python (2º turno simulado, 1º turno dos arquivos brutos do TSE e 2022 direto dos zips do Portal de Dados Abertos), com a apuração parcial e completa: nenhuma diferença entre os valores do navegador e os recalculados.
 
 O motor ao vivo (em `painel/template.html`) reproduz em JavaScript as mesmas regras do tratamento em Python (`tse_comum.py`). Num teste com a apuração completa simulada, os 115.300 valores montados no navegador (candidatos, resumo, estados, municípios, países e cidades no exterior) foram idênticos aos gerados pelo pipeline.
 
