@@ -1739,7 +1739,7 @@ function registrarCurva() {
   const pc = n => 100 * (votos.find(v => v.numero === n) || { votos: 0 }).votos / res.validos;
   const ult = VIVO.curva[VIVO.curva.length - 1];
   if (ult && ult.p === p) return;
-  VIVO.curva.push({ p, l: +pc("13").toFixed(3), f: +pc("22").toFixed(3), h: `${br.hg || ""}` });
+  VIVO.curva.push({ p, l: pc("13"), f: pc("22"), h: `${br.hg || ""}` });   // sem arredondar: o rótulo arredonda uma vez só
   try { localStorage.setItem(CHAVE_CURVA, JSON.stringify(VIVO.curva)); } catch (e) {}
 }
 
