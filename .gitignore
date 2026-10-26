@@ -28,3 +28,6 @@ simulador_2t.py
 # Relatórios de acesso e chave da API do GoatCounter (ficam só no computador do LADRI)
 relatorios/
 .goatcounter_token
+
+# Rascunho de artigo (não publicado)
+artigo/

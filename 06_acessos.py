@@ -84,7 +84,7 @@ def coletar(token: str, inicio: str, fim: str) -> dict:
     paginas = ",".join(str(h["path_id"]) for h in dados["hits"].get("hits") or [] if not h.get("event"))
     filtro = {"include_paths": paginas} if paginas else {}
     for pagina in ("toprefs", "locations", "systems", "browsers", "sizes"):
-        dados[pagina] = buscar(f"stats/{pagina}", token, limit=20, **per, **filtro)
+        dados[pagina] = buscar(f"stats/{pagina}", token, limit=100, **per, **filtro)   # 100: a lista completa (antes cortava em 20)
     return dados
 
 
