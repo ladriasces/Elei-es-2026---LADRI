@@ -2152,7 +2152,7 @@ function paraVirarVivo(X) {
   const nl = V.lider.n === "13" ? "Lula" : "Flávio Bolsonaro", ns = V.seg.n === "13" ? "Lula" : "Flávio Bolsonaro";
   const corS = V.seg.n === "13" ? "var(--lula)" : "var(--flavio)", corL = V.lider.n === "13" ? "var(--lula)" : "var(--flavio)";
   if (V.final) {
-    $("#vivo-virar").innerHTML = `<div class="virar-grande" style="color:${corL}">${nl}</div><div class="virar-frase">venceu com ${fmtInt.format(V.dif)} votos de diferença (${fmtPP(100 * V.dif / V.validos, 2)} dos válidos). Não há mais votos a apurar.</div>`;
+    $("#vivo-virar").innerHTML = `<div class="virar-grande" style="color:${corL}">${nl}</div><div class="virar-frase">venceu com ${fmtInt.format(V.dif)} votos de diferença. Não há mais votos a apurar.</div>`;
     $("#vivo-falta").innerHTML = `<div class="aviso-vivo">Todas as seções foram apuradas.</div>`;
     $("#vivo-virar-nota").textContent = "";
     return;
@@ -2186,7 +2186,7 @@ function justaVivo(X) {
   if (!tem) { o.innerHTML = `<b>Efeito da ordem da apuração.</b> Quando os primeiros municípios forem apurados, este quadro compara o que esses locais deram a Flávio e a Lula no 1º turno com o resultado do país inteiro. A diferença mostra quanto a parcial favorece um dos lados só pela ordem em que as seções chegam; a mudança real é a coluna “Variação”.`; return; }
   // Efeito da ordem: quanto os locais já apurados diferem do país inteiro, medido no 1º turno
   const m1 = M.flavio1 - M.lula1, mBR = 100 * (T1.R.v_flavio - T1.R.v_lula) / T1.R.validos, ef = m1 - mBR;
-  if (M.apurado >= 99.995) { o.innerHTML = `Com todo o eleitorado apurado, a comparação vale para o país inteiro: de um turno para o outro, a diferença Flávio − Lula foi de ${fmtPP(mBR)} para ${fmtPP(M.flavio - M.lula)}.`; return; }
+  if (M.apurado >= 99.995) { o.innerHTML = `Com todo o eleitorado apurado, a comparação vale para o país inteiro: de um turno para o outro, a diferença Flávio − Lula foi de ${fmtPP(mBR)} para ${fmtPP(M.flavio - M.lula)}`; return; }
   const quem = ef > 0 ? "Flávio" : "Lula", forte = Math.abs(ef) >= 0.05;
   o.innerHTML = `<b>Efeito da ordem da apuração.</b> No 1º turno, os locais já apurados deram a Flávio − Lula ${fmtPP(m1)}, contra ${fmtPP(mBR)} no país inteiro. ${forte ? `Por isso, só pela ordem em que as seções chegam, a parcial está cerca de ${fmtPP(Math.abs(ef)).replace("+", "")} mais favorável a ${quem} do que o país. ` : "Os locais já apurados se parecem com o país como um todo. "}A mudança real entre os turnos é a coluna \u201cVariação\u201d: diferença Flávio − Lula de ${fmtPP(m1)} para ${fmtPP(M.flavio - M.lula)} nesses mesmos locais.`;
 }

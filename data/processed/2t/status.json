@@ -1,7 +1,7 @@
 {
  "turno": 2,
- "pst": "0,00",
- "final": false,
- "gerado": "15/10/2026 09:38:12",
- "totalizado": ""
+ "pst": "100,00",
+ "final": true,
+ "gerado": "25/10/2026 23:27:02",
+ "totalizado": "25/10/2026 23:26:38"
 }
